@@ -5,10 +5,9 @@
 git clone https://github.com/nguyenatu188/tpfrontend.git
 ```
 
-### 2. Cài Dependencies (chạy lệnh trong folder tpfrontend):
+### 2. Cài Dependencies:
 ```bash
-npm install tailwindcss @tailwindcss/vite react-icons framer-motion react-router-dom
-npm i -D daisyui@latest
+npm i
 ```
 
 ### 3. Chạy development
