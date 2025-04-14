@@ -1,2 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@font-face {
+  font-family: 'jembrush';
+  src: url('../public/fonts/Jembrush.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-jembrush {
+  font-family: 'jembrush';
+}
