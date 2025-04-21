@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "username": "Nguyen Anh Tu",
+    "avatar": "src/assets/tu.png",
+    "name": "New York",
+    "startDate": "10 Apr 2020",
+    "endDate": "30 Apr 2025",
+    "nights": 20,
+    "destinations": 1,
+    "backgroundImage": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "destinationsList": [
+      {
+        "id": 1,
+        "name": "New York",
+        "startDate": "Thu 10 Apr",
+        "endDate": "Fri 11 Apr",
+        "nights": 1,
+        "latitude": 40.7128,
+        "longitude": -74.0060
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "username": "Nguyen Anh Tu",
+    "avatar": "src/assets/tu.png",
+    "name": "Paris",
+    "startDate": "15 May 2023",
+    "endDate": "25 May 2023",
+    "nights": 10,
+    "destinations": 1,
+    "backgroundImage": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    "destinationsList": [
+      {
+        "id": 1,
+        "name": "Paris",
+        "startDate": "Mon 15 May",
+        "endDate": "Wed 16 May",
+        "nights": 1,
+        "latitude": 48.8566,
+        "longitude": 2.3522
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "username": "Nguyen Anh Tu",
+    "avatar": "src/assets/tu.png",
+    "name": "Tokyo",
+    "startDate": "01 Jan 2024",
+    "endDate": "15 Jan 2024",
+    "nights": 14,
+    "destinations": 2,
+    "backgroundImage": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf",
+    "destinationsList": [
+      {
+        "id": 1,
+        "name": "Tokyo",
+        "startDate": "Mon 01 Jan",
+        "endDate": "Tue 02 Jan",
+        "nights": 1,
+        "latitude": 35.6762,
+        "longitude": 139.6503
+      }
+    ]
+  }
+]
