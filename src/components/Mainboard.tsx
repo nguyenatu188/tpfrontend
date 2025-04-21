@@ -10,4 +10,4 @@ const Mainboard = () => {
     </>
   );
 };
-export default Mainboard;
+export default Mainboard

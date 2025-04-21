@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@greatsumini/react-facebook-login": "^3.4.0",
+    "@react-oauth/google": "^0.12.1",
     "@tailwindcss/vite": "^4.1.3",
     "framer-motion": "^12.6.5",
+    "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",

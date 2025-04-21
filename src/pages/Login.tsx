@@ -1,92 +1,170 @@
-import React from "react";
-import { FaArrowCircleLeft } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import React, { useState } from "react"
+import { FaArrowCircleLeft } from "react-icons/fa"
+import { Link } from "react-router-dom"
+import useLogin from "../hooks/useLogin"
+import { GoogleLogin } from "@react-oauth/google"
+import { useAuthContext } from "../context/AuthContext"
+import FacebookLogin from '@greatsumini/react-facebook-login'
 
 const Login = () => {
+  const { setAuthUser } = useAuthContext()
+  const { login, loading } = useLogin()
+  const [inputs, setInputs] = useState({
+    username: '',
+    password: ''
+  })
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setInputs(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    login(inputs.username, inputs.password)
+  }
+
+  const handleFacebookLogin = async (response: { accessToken: string; userID: string }) => {
+    try {
+      const res = await fetch("/api/auth/facebook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          accessToken: response.accessToken,
+          userID: response.userID
+        })
+      });
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+  
+      setAuthUser(data);
+    } catch (error) {
+      console.error("Facebook login error:", error);
+    }
+  }
+
   return (
-    <>
-      <div
-        className="h-screen bg-cover bg-center"
-        style={{ backgroundImage: "url('/src/assets/authBG.png')" }}
-      >
-        <Link to="/">
-          <FaArrowCircleLeft className="text-[#1A77F2] mx-5 w-[40px] h-[40px] hover:text-[#1899d6] cursor-pointer transition" />
-        </Link>
-        <div className="flex flex-col items-center justify-center h-full gap-5">
-          <fieldset className="fieldset w-xs bg-base-200 border border-base-300 p-4 rounded-box">
-            <legend className="text-[#1A77F2] text-3xl font-bold fieldset-legend">
+    <div
+      className="h-screen bg-cover bg-center relative"
+      style={{ backgroundImage: "url('/src/assets/authBG.png')" }}
+    >
+      <Link to="/">
+        <FaArrowCircleLeft className="text-[#1A77F2] absolute top-5 mx-5 w-[40px] h-[40px] hover:text-[#1899d6] cursor-pointer transition" />
+      </Link>
+      <div className="flex flex-col items-center justify-center h-full gap-5">
+        <form onSubmit={handleSubmit}>
+          <fieldset className="fieldset relative w-xs bg-base-200 border border-base-300 p-4 rounded-box">
+            <legend className="text-[#1A77F2] absolute top-[-50px] text-3xl font-bold fieldset-legend">
               Login
             </legend>
 
-            <label className="fieldset-label">Email</label>
-            <input type="email" className="input" placeholder="Email" />
+            <label className="fieldset-label">Username</label>
+            <input
+              type="text"
+              name="username"
+              className="input"
+              placeholder="Username"
+              value={inputs.username}
+              onChange={handleChange}
+              required
+            />
 
             <label className="fieldset-label">Password</label>
-            <input type="password" className="input" placeholder="Password" />
+            <input
+              type="password"
+              name="password"
+              className="input"
+              placeholder="Password"
+              value={inputs.password}
+              onChange={handleChange}
+              required
+            />
 
-            <Link to="/forgotpassword" className="mt-2">
+            <Link to="/forgotpassword" className="mt-2 block">
               Forgot your password?
             </Link>
 
-            <button className="btn btn-neutral mt-4">Login</button>
+            <button
+              type="submit"
+              className="btn btn-neutral mt-4 w-full"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
           </fieldset>
+        </form>
 
-          <div className="divider divider-neutral w-72 mx-auto text-[#1A77F2] font-bold">
-            OR
-          </div>
+        <div className="divider divider-neutral w-72 mx-auto text-[#1A77F2] font-bold">
+          OR
+        </div>
 
-          <div className="flex flex-col gap-4">
-            <button className="btn bg-white text-black border-[#e5e5e5]">
-              <svg
-                aria-label="Google logo"
-                width="16"
-                height="16"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 512 512"
+        <div className="flex flex-col gap-4">
+
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              try {
+                const res = await fetch("/api/auth/google", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  credentials: "include",
+                  body: JSON.stringify({
+                    credential: credentialResponse.credential
+                  })
+                })
+
+                const data = await res.json()
+                if (!res.ok) throw new Error(data.error)
+
+                setAuthUser(data)
+
+              } catch (error) {
+                console.error("Google login error:", error)
+              }
+            }}
+            onError={() => console.log("Google login thất bại")}
+          />
+
+          <FacebookLogin
+            appId= {import.meta.env.VITE_FACEBOOK_APP_ID}
+            onSuccess={handleFacebookLogin}
+            onFail={(error) => {
+              console.log('Facebook login failed:', error);
+            }}
+            onProfileSuccess={(response) => {
+              console.log('Got Facebook profile:', response);
+            }}
+            scope="email, public_profile"
+            render={({ onClick }) => (
+              <button 
+                onClick={onClick}
+                className="btn bg-[#1A77F2] text-white border-[#005fd8] w-full"
               >
-                <g>
-                  <path d="m0 0H512V512H0" fill="#fff"></path>
+                <svg
+                  aria-label="Facebook logo"
+                  width="16"
+                  height="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 32 32"
+                >
                   <path
-                    fill="#34a853"
-                    d="M153 292c30 82 118 95 171 60h62v48A192 192 0 0190 341"
-                  ></path>
-                  <path
-                    fill="#4285f4"
-                    d="m386 400a140 175 0 0053-179H260v74h102q-7 37-38 57"
-                  ></path>
-                  <path
-                    fill="#fbbc02"
-                    d="m90 341a208 200 0 010-171l63 49q-12 37 0 73"
-                  ></path>
-                  <path
-                    fill="#ea4335"
-                    d="m153 219c22-69 116-109 179-50l55-54c-78-75-230-72-297 55"
-                  ></path>
-                </g>
-              </svg>
-              Login with Google
-            </button>
-
-            <button className="btn bg-[#1A77F2] text-white border-[#005fd8]">
-              <svg
-                aria-label="Facebook logo"
-                width="16"
-                height="16"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 32 32"
-              >
-                <path
-                  fill="white"
-                  d="M8 12h5V8c0-6 4-7 11-6v5c-4 0-5 0-5 3v2h5l-1 6h-4v12h-6V18H8z"
-                ></path>
-              </svg>
-              Login with Facebook
-            </button>
-          </div>
+                    fill="white"
+                    d="M8 12h5V8c0-6 4-7 11-6v5c-4 0-5 0-5 3v2h5l-1 6h-4v12h-6V18H8z"
+                  />
+                </svg>
+                Login with Facebook
+              </button>
+            )}
+          />
         </div>
       </div>
-    </>
-  );
-};
+    </div>
+  )
+}
 
-export default Login;
+export default Login
