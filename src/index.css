@@ -11,3 +11,36 @@
 .font-jembrush {
   font-family: 'jembrush';
 }
+
+@layer utilities {
+  .bg-custom {
+    background-color: #FDFAF6;
+  }
+  .bg-container{
+    background-color: #6fd3f7;
+  }
+  .bg-container-2 {
+    background-color: #FDFAF6;
+  }
+  .bg-hover{
+    background-color: #a2e6ff;
+  }
+  .text-custom {
+    color: #6fd3f7;
+  }
+  .text-custom-2 {
+    color: #333333;
+  }
+  .bg-text-custom {
+    background-color: #6fd3f7;
+  }
+  .border-custom-2 {
+    color: #6fd3f7;
+  }
+  .menu a.menu-active {
+    background-color: #6fd3f7 !important; 
+    color: #FDFAF6 !important;
+
+  }
+    
+}

@@ -1,36 +1,49 @@
+import { useState } from "react";
+import userData from "../data/usersData.json";
+
+// Define the possible menu items as a union type
+type MenuItem = "Trip" | "Countries" | "Share profile" | "Country";
+
 const Sidebar = () => {
+  // State with explicit type
+  const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip");
+
+  // Function with typed parameter
+  const handleMenuClick = (menu: MenuItem) => {
+    setActiveMenu(menu);
+  };
+
   return (
-    <ul className="menu bg-base-200 w-56 h-screen ">
-      <li className="mb-10">
+    <ul className="menu bg-custom w-56 h-screen w-auto border-r-1 border-[#dde9ed] text-black">
+      <li className="border-b-1 border-[#dde9ed] mt-5">
         <div className="avatar">
-          <div className="ring-primary ring-offset-base-100 w-24 rounded-full ring ring-offset-2">
-            <img src="src\assets\tu.png" alt="avatar" />
+          <div className=" w-24 rounded-full ">
+            <img src={userData.avatar} alt="avatar" />
           </div>
         </div>
 
         <div className="flex flex-col justify-start items-start">
-          <h1 className="text-xl text-primary-content font-bold block">
-            Nguyễn Anh Tú
-          </h1>
-          <p className="text-sm">@natus</p>
+          <h1 className="text-xl text-black font-bold block">{userData.name}</h1>
+          <p className="text-sm text-black">{userData.username}</p>
         </div>
-        <div className="flex flex-row ...">
-          <div className="flex flex-col ...">
-            <div>1000000</div>
+        <div className="flex flex-row mb-5">
+          <div className="flex flex-col">
+            <div>{userData.followers.toLocaleString()}</div>
             <div>followers</div>
           </div>
-          <div className="flex flex-col ...">
-            <div>1</div>
+          <div className="flex flex-col">
+            <div>{userData.following}</div>
             <div>following</div>
           </div>
-          <div className="flex flex-col ...">
-            <div>1</div>
+          <div className="flex flex-col">
+            <div>{userData.countries}</div>
             <div>countries</div>
           </div>
         </div>
       </li>
-      <li className="mb-4">
-        <label className="input">
+
+      <li className="my-8">
+        <label className="input bg-custom border-[#dde9ed] border-2">
           <svg
             className="h-[1em] opacity-50"
             xmlns="http://www.w3.org/2000/svg"
@@ -50,18 +63,38 @@ const Sidebar = () => {
           <input type="search" required placeholder="Search" />
         </label>
       </li>
-      <li>
-        <a className="menu-active">Trip</a>
+      <li className="my-2">
+        <a
+          className={activeMenu === "Trip" ? "menu-active" : ""}
+          onClick={() => handleMenuClick("Trip")}
+        >
+          Trip
+        </a>
       </li>
       <li>
-        <a className="">Countries</a>
+        <a
+          className={activeMenu === "Countries" ? "menu-active" : ""}
+          onClick={() => handleMenuClick("Countries")}
+        >
+          Countries
+        </a>
       </li>
       <div className="mt-auto">
         <li>
-          <a>Share profile</a>
+          <a
+            className={activeMenu === "Share profile" ? "menu-active" : ""}
+            onClick={() => handleMenuClick("Share profile")}
+          >
+            Share profile
+          </a>
         </li>
         <li>
-          <a>Country</a>
+          <a
+            className={activeMenu === "Country" ? "menu-active" : ""}
+            onClick={() => handleMenuClick("Country")}
+          >
+            Country
+          </a>
         </li>
       </div>
     </ul>

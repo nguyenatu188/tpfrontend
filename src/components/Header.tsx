@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 const Header = () => {
   return (
     <>
-      <div className='max-w-7xl mx-auto mt-5 flex justify-between items-center'>
+      <div className='max-w-7xl mx-auto mt-5 flex justify-between items-center mb-5 border-b-2'>
         <p className='text-7xl font-jembrush'>TripPlanner</p>
         <div className='flex gap-4'>
           <Link to="/login">

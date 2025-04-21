@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotpasswordPage from "./pages/ForgotpasswordPage";
 import HomePage from "./pages/HomePage";
+import TripDetail from "./pages/TripDetail";
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgotpassword" element={<ForgotpasswordPage />} />
       <Route path="/home" element={<HomePage />} />
-
+      <Route path="/tripdetail/:id/*" element={<TripDetail />} />
     </Routes>
   );
 }
