@@ -14,38 +14,40 @@ interface Category {
   items: PackingItem[];
 }
 
-const Packing: React.FC<PackingProps> = ({ id }) => {
-  // State to manage selected categories and their items
+const Packing: React.FC<PackingProps> = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-
-  // State to control the visibility of the popup
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-
-  // State to track progress
   const [progress, setProgress] = useState(0);
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({
+    message: '',
+    visible: false,
+  });
 
-  // Predefined categories (as shown in the screenshot)
   const predefinedCategories = [
     'Baby', 'Beach', 'Business', 'Camping', 'Clothing', 'Cycling',
     'Electronics', 'Essentials', 'Fancy dinner', 'Food', 'Gym', 'Hiking',
     'Kitesurfing', 'Make-up', 'Motorcycling', 'Music Festival',
   ];
 
-  // Function to handle category selection from the popup
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: '', visible: false }), 3000);
+  };
+
   const handleCategorySelect = (categoryName: string) => {
     if (!categories.some((cat) => cat.name === categoryName)) {
       setCategories([...categories, { name: categoryName, items: [] }]);
+      showToast(`Category "${categoryName}" added successfully!`);
+      setIsPopupOpen(false);
     }
   };
 
-  // Function to open/close the popup
   const togglePopup = () => {
     setIsPopupOpen(!isPopupOpen);
   };
 
-  // Function to add a new item to a category
   const addItemToCategory = (categoryName: string, itemName: string) => {
-    if (!itemName.trim()) return; // Prevent adding empty items
+    if (!itemName.trim()) return;
     setCategories((prevCategories) =>
       prevCategories.map((cat) =>
         cat.name === categoryName
@@ -53,9 +55,9 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
           : cat
       )
     );
+    showToast(`Item "${itemName}" added to "${categoryName}"!`);
   };
 
-  // Function to toggle the packed status of an item
   const toggleItemPacked = (categoryName: string, itemIndex: number) => {
     setCategories((prevCategories) =>
       prevCategories.map((cat) =>
@@ -71,14 +73,12 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
     );
   };
 
-  // Function to delete a category
   const deleteCategory = (categoryName: string) => {
     setCategories((prevCategories) =>
       prevCategories.filter((cat) => cat.name !== categoryName)
     );
   };
 
-  // Function to delete an item from a category
   const deleteItem = (categoryName: string, itemIndex: number) => {
     setCategories((prevCategories) =>
       prevCategories.map((cat) =>
@@ -89,7 +89,6 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
     );
   };
 
-  // Calculate progress based on packed items
   useEffect(() => {
     const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0);
     const packedItems = categories.reduce(
@@ -101,15 +100,14 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
   }, [categories]);
 
   return (
-    <div className="flex-1 p-6 bg-white">
+    <div className="flex-1 p-6 bg-white relative">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-black">Packing list</h1>
         <div className="flex space-x-2">
-          
           <button
             onClick={togglePopup}
-            className="px-4 py-2 bg-container text-white rounded-full "
+            className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
           >
             + Add list
           </button>
@@ -180,7 +178,7 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
                     if (e.key === 'Enter') {
                       const input = e.target as HTMLInputElement;
                       addItemToCategory(category.name, input.value);
-                      input.value = ''; // Clear input after adding
+                      input.value = '';
                     }
                   }}
                   className="flex-1 p-2 border rounded-lg text-black"
@@ -193,11 +191,11 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
 
       {/* Popup for Category Selection */}
       {isPopupOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-3/4 max-w-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-black">Select category</h2>
-              <button onClick={togglePopup} className="text-black">
+              <button onClick={togglePopup} className="text-black hover:text-gray-700">
                 ✕
               </button>
             </div>
@@ -209,14 +207,21 @@ const Packing: React.FC<PackingProps> = ({ id }) => {
                   className="flex items-center justify-between p-2 bg-white border rounded-lg hover:bg-gray-100 text-black"
                 >
                   <span>{category}</span>
-                  <span className="text-custom">select</span>
+                  <span className="text-blue-500">select</span>
                 </button>
               ))}
             </div>
-            <button className="mt-4 flex items-center text-custom">
+            <button className="mt-4 flex items-center text-blue-500 hover:text-blue-600">
               <span className="mr-1">➕</span> Create custom list
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+          {toast.message}
         </div>
       )}
     </div>
