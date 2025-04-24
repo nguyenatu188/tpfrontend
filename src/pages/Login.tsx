@@ -84,13 +84,13 @@ const Login = () => {
               required
             />
 
-            <Link to="/forgotpassword" className="mt-2 block">
-              Forgot your password?
+            <Link to="/forgetpassword" className="cursor-pointer my-3 flex items-start">
+              Forget your password?
             </Link>
 
             <button
               type="submit"
-              className="btn btn-neutral mt-4 w-full"
+              className="btn btn-neutral w-full"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Login"}

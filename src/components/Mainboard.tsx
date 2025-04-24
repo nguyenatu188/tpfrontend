@@ -26,24 +26,29 @@ const Mainboard = () => {
   };
 
   return (
-    <div className="flex flex-col w-full px-4 bg-custom">
-      <div className="relative w-full overflow-hidden mt-7">
-        {/* Điều hướng trái phải */}
-      <div className="flex flex-row justify-end items-center w-full h-10 mt-2 mb-2">
-        <button
-          onClick={handlePrev}
-          className="btn btn-circle border-none btn-md mx-2 bg-custom text-black "
-        >
-          ❮
-        </button>
+    <div className="flex flex-col w-full p-4 bg-custom">
+      <div className="relative w-full overflow-hidden">
+        <div className="flex mb-4">
+          <button className="btn btn-dash btn-info btn-xs sm:btn-sm md:btn-md lg:btn-lg xl:btn-xl">New</button>
+          {/* Điều hướng trái phải */}
+          <div className="flex flex-row justify-end items-center w-full h-10 mt-2 mb-2">
 
-        <button
-          onClick={handleNext}
-          className="btn btn-circle border-none btn-md mx-2 bg-custom text-black "
-        >
-          ❯
-        </button>
-      </div>
+            <button
+              onClick={handlePrev}
+              className="btn btn-circle border-none btn-md mx-2 bg-custom text-black "
+            >
+              ❮
+            </button>
+
+            <button
+              onClick={handleNext}
+              className="btn btn-circle border-none btn-md mx-2 bg-custom text-black "
+            >
+              ❯
+            </button>
+            
+          </div>
+        </div>
         <div
           className="flex transition-transform duration-500 ease-in-out"
           style={{

@@ -1,14 +1,13 @@
 import { useState } from "react";
-import userData from "../data/usersData.json";
+import { useAuthContext } from "../context/AuthContext"; // Đường dẫn tùy thuộc vào cấu trúc thư mục của bạn
 
 // Define the possible menu items as a union type
 type MenuItem = "Trip" | "Countries" | "Share profile" | "Country";
 
 const Sidebar = () => {
-  // State with explicit type
+  const { authUser } = useAuthContext();
   const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip");
 
-  // Function with typed parameter
   const handleMenuClick = (menu: MenuItem) => {
     setActiveMenu(menu);
   };
@@ -17,26 +16,33 @@ const Sidebar = () => {
     <ul className="menu bg-custom w-56 h-screen w-auto border-r-1 border-[#dde9ed] text-black">
       <li className="border-b-1 border-[#dde9ed] mt-5">
         <div className="avatar">
-          <div className=" w-24 rounded-full ">
-            <img src={userData.avatar} alt="avatar" />
+          <div className="w-24 rounded-full">
+            <img
+              src={authUser?.avatarUrl || "/default-avatar.png"} // fallback nếu chưa có ảnh
+              alt="avatar"
+            />
           </div>
         </div>
 
         <div className="flex flex-col justify-start items-start">
-          <h1 className="text-xl text-black font-bold block">{userData.name}</h1>
-          <p className="text-sm text-black">{userData.username}</p>
+          <h1 className="text-xl text-black font-bold block">
+            {authUser?.fullname || "Loading..."}
+          </h1>
+          <p className="text-sm text-black">{authUser?.username || ""}</p>
         </div>
+
+        {/* Nếu muốn có follower/following/countries thì cần fetch thêm từ backend */}
         <div className="flex flex-row mb-5">
           <div className="flex flex-col">
-            <div>{userData.followers.toLocaleString()}</div>
+            <div>0</div>
             <div>followers</div>
           </div>
           <div className="flex flex-col">
-            <div>{userData.following}</div>
+            <div>0</div>
             <div>following</div>
           </div>
           <div className="flex flex-col">
-            <div>{userData.countries}</div>
+            <div>0</div>
             <div>countries</div>
           </div>
         </div>
@@ -63,6 +69,7 @@ const Sidebar = () => {
           <input type="search" required placeholder="Search" />
         </label>
       </li>
+
       <li className="my-2">
         <a
           className={activeMenu === "Trip" ? "menu-active" : ""}

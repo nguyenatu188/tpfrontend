@@ -5,6 +5,7 @@ import Register from "./pages/Register"
 import HomePage from "./pages/HomePage"
 import { useAuthContext } from "./context/AuthContext"
 import TripDetail from "./pages/TripDetail"
+import ForgetPassword from "./pages/ForgetpasswordPage"
 
 function App() {
   const { authUser, isLoading } = useAuthContext()
@@ -16,6 +17,7 @@ function App() {
       <Route path="/tripdetail/:id/*" element={ authUser? <TripDetail /> : <Navigate to="/login"/>} />
       <Route path="/register" element={!authUser ? <Register/> : <Navigate to="/home"/> } />
       <Route path="/login" element={!authUser ? <Login/> : <Navigate to="/home"/> } />
+      <Route path="/forgetpassword" element={!authUser ? <ForgetPassword /> : <Navigate to="/home" />} />
     </Routes>
   )
 }
