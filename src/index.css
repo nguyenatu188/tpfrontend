@@ -38,9 +38,9 @@
     color: #6fd3f7;
   }
   .menu a.menu-active {
-    background-color: #6fd3f7 !important; 
-    color: #FDFAF6 !important;
-
+    background-color: #6fd3f77a !important;
+    color: #333333 !important;
+    font-weight: 700 !important;
   }
     
 }

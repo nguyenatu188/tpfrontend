@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import useLogout from '../hooks/useLogout' // hoặc đúng đường dẫn của bạn
+import useLogout from '../hooks/auth/useLogout' // hoặc đúng đường dẫn của bạn
 
 const Header = () => {
   const { authUser } = useAuthContext()

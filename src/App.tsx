@@ -5,7 +5,8 @@ import Register from "./pages/Register"
 import HomePage from "./pages/HomePage"
 import { useAuthContext } from "./context/AuthContext"
 import TripDetail from "./pages/TripDetail"
-import ForgetPassword from "./pages/ForgetpasswordPage"
+import ForgetPassword from "./pages/Forgetpassword"
+import ResetPassword from "./pages/ResetPassword"
 
 function App() {
   const { authUser, isLoading } = useAuthContext()
@@ -18,6 +19,7 @@ function App() {
       <Route path="/register" element={!authUser ? <Register/> : <Navigate to="/home"/> } />
       <Route path="/login" element={!authUser ? <Login/> : <Navigate to="/home"/> } />
       <Route path="/forgetpassword" element={!authUser ? <ForgetPassword /> : <Navigate to="/home" />} />
+      <Route path="/reset-password" element={!authUser ? <ResetPassword /> : <Navigate to="/home" />} />
     </Routes>
   )
 }

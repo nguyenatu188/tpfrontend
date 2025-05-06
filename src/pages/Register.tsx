@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { FaArrowCircleLeft } from "react-icons/fa"
 import { Link } from 'react-router-dom'
-import useRegister from '../hooks/useRegister'
+import useRegister from '../hooks/auth/useRegister'
 
 const Register = () => {
   const { register, isLoading } = useRegister()

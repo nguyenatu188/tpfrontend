@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { FaArrowCircleLeft } from "react-icons/fa"
 import { Link } from "react-router-dom"
-import useLogin from "../hooks/useLogin"
+import useLogin from "../hooks/auth/useLogin"
 import { GoogleLogin } from "@react-oauth/google"
 import { useAuthContext } from "../context/AuthContext"
 import FacebookLogin from '@greatsumini/react-facebook-login'

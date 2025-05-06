@@ -1,12 +1,11 @@
-import { useState } from "react";
-import { useAuthContext } from "../context/AuthContext"; // Đường dẫn tùy thuộc vào cấu trúc thư mục của bạn
+import { useState } from "react"
+import { useAuthContext } from "../context/AuthContext"
 
-// Define the possible menu items as a union type
-type MenuItem = "Trip" | "Countries" | "Share profile" | "Country";
+type MenuItem = "Trip" | "Countries"
 
 const Sidebar = () => {
-  const { authUser } = useAuthContext();
-  const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip");
+  const { authUser } = useAuthContext()
+  const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip")
 
   const handleMenuClick = (menu: MenuItem) => {
     setActiveMenu(menu);
@@ -72,7 +71,7 @@ const Sidebar = () => {
 
       <li className="my-2">
         <a
-          className={activeMenu === "Trip" ? "menu-active" : ""}
+          className={`font-jembrush text-3xl ${activeMenu === "Trip" ? "menu-active" : ""}`}
           onClick={() => handleMenuClick("Trip")}
         >
           Trip
@@ -80,32 +79,14 @@ const Sidebar = () => {
       </li>
       <li>
         <a
-          className={activeMenu === "Countries" ? "menu-active" : ""}
+          className={`font-jembrush text-3xl ${activeMenu === "Countries" ? "menu-active" : ""}`}
           onClick={() => handleMenuClick("Countries")}
         >
           Countries
         </a>
       </li>
-      <div className="mt-auto">
-        <li>
-          <a
-            className={activeMenu === "Share profile" ? "menu-active" : ""}
-            onClick={() => handleMenuClick("Share profile")}
-          >
-            Share profile
-          </a>
-        </li>
-        <li>
-          <a
-            className={activeMenu === "Country" ? "menu-active" : ""}
-            onClick={() => handleMenuClick("Country")}
-          >
-            Country
-          </a>
-        </li>
-      </div>
     </ul>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar
