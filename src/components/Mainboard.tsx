@@ -1,45 +1,45 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import useGetTrips from "../hooks/trips/useGetTrips"
-import NewTripModal from "./NewTripModal"
-import TripCard from "./TripCard"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useGetTrips from "../hooks/trips/useGetTrips";
+import NewTripModal from "./NewTripModal";
+import TripCard from "./TripCard";
 
 const Mainboard = () => {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const { trips, loading, refetch } = useGetTrips()
-  const [showMap, setShowMap] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const navigate = useNavigate()
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const { trips, loading, refetch } = useGetTrips();
+  const [showMap, setShowMap] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === trips.length - 1 ? 0 : prevIndex + 1
-    )
-  }
+    );
+  };
 
   const handlePrev = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? trips.length - 1 : prevIndex - 1
-    )
-  }
+    );
+  };
 
   const handleTripClick = (id: number) => {
-    navigate(`/tripdetail/${id}/plan`)
-  }
+    navigate(`/tripdetail/${id}/plan`);
+  };
 
   const toggleMap = () => {
-    setShowMap(!showMap)
-  }
+    setShowMap(!showMap);
+  };
 
   const handleTripAddedOrDeleted = () => {
-    refetch()
+    refetch();
     // Reset to first slide when the trips list changes
-    setCurrentIndex(0)
-  }
+    setCurrentIndex(0);
+  };
 
   const handleModalClose = () => {
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
   return (
     <div className="flex flex-col w-full px-4 bg-custom">
@@ -85,11 +85,20 @@ const Mainboard = () => {
                   width: `${trips.length * 100}%`,
                 }}
               >
-                {trips.map((trip) => (
+                {/* {trips.map((trip) => (
                   <div className="w-full flex-shrink-0" key={trip.id}>
                     <TripCard
                       trip={trip}
                       onClick={handleTripClick}
+                      onTripDeleted={handleTripAddedOrDeleted}
+                    />
+                  </div>
+                ))} */}
+                {trips.map((trip) => (
+                  <div className="w-full flex-shrink-0" key={trip.id}>
+                    <TripCard
+                      trip={trip}
+                      onClick={() => handleTripClick(trip.id)} // Pass the trip ID when clicked
                       onTripDeleted={handleTripAddedOrDeleted}
                     />
                   </div>
@@ -140,7 +149,7 @@ const Mainboard = () => {
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Mainboard
+export default Mainboard;

@@ -9,7 +9,11 @@ const Header = () => {
   return (
     <div className={`${authUser ? 'bg-custom border-2' : ''} border-[#dde9ed] p-2`}>
       <div className='max-w-7xl mx-auto flex justify-between items-center'>
-        <p className={`text-7xl ${authUser ? 'text-custom-2' : ''} font-jembrush`}>TripPlanner</p>
+      <Link to="/home">
+          <p className={`text-7xl ${authUser ? 'text-custom-2' : ''} font-jembrush cursor-pointer`}>
+            TripPlanner
+          </p>
+        </Link>
 
         {authUser ? (
           <div className="flex items-center gap-4">

@@ -1,0 +1,31 @@
+{
+    "transports": [
+      {
+        "id": "1",
+        "type": "Car",
+        "name": "Sedan",
+        "price": 50,
+        "capacity": 4,
+        "image": "https://via.placeholder.com/300x200?text=Sedan",
+        "description": "Comfortable sedan for small groups"
+      },
+      {
+        "id": "2",
+        "type": "Van",
+        "name": "Minivan",
+        "price": 80,
+        "capacity": 7,
+        "image": "https://via.placeholder.com/300x200?text=Minivan",
+        "description": "Spacious van for medium groups"
+      },
+      {
+        "id": "3",
+        "type": "Bus",
+        "name": "Tour Bus",
+        "price": 150,
+        "capacity": 20,
+        "image": "https://via.placeholder.com/300x200?text=Bus",
+        "description": "Large bus for group tours"
+      }
+    ]
+  }
