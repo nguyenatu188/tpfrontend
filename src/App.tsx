@@ -7,7 +7,7 @@ import { useAuthContext } from "./context/AuthContext"
 import TripDetail from "./pages/TripDetail"
 import ForgetPassword from "./pages/Forgetpassword"
 import ResetPassword from "./pages/ResetPassword"
-import UserPage from "./pages/UserPage"
+import UserProfilePage from "./pages/UserProfilePage"
 
 function App() {
   const { authUser, isLoading } = useAuthContext()
@@ -21,8 +21,8 @@ function App() {
       <Route path="/login" element={!authUser ? <Login/> : <Navigate to="/home"/> } />
       <Route path="/forgetpassword" element={!authUser ? <ForgetPassword /> : <Navigate to="/home" />} />
       <Route path="/reset-password" element={!authUser ? <ResetPassword /> : <Navigate to="/home" />} />
-      <Route path="/profile/:username" Component={UserPage} />
 
+      <Route path="/profile/:username" element={<UserProfilePage />} />
     </Routes>
   )
 }

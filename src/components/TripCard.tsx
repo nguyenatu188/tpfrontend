@@ -1,67 +1,61 @@
-import { useState } from "react"
-import { FiMoreVertical, FiTrash, FiLock, FiGlobe } from "react-icons/fi"
-import { useDeleteTrip } from "../hooks/trips/useDeleteTrip"
-import { useAuthContext } from "../context/AuthContext"
-import { calculateDuration } from "../utils/calculateDate"
-import usePexelsImage from "../utils/usePexelsImage"
-import { useUpdatePrivacy } from "../hooks/trips/useUpdatePrivacy"
+import { useState } from "react";
+import { FiMoreVertical, FiTrash, FiLock, FiGlobe } from "react-icons/fi";
+import { useDeleteTrip } from "../hooks/trips/useDeleteTrip";
+import { useAuthContext } from "../context/AuthContext";
+import { calculateDuration } from "../utils/calculateDate";
+import usePexelsImage from "../utils/usePexelsImage";
+import { useUpdatePrivacy } from "../hooks/trips/useUpdatePrivacy";
+import { Trip } from "../types/trip";
 
 interface TripCardProps {
-  trip: {
-    id: number
-    owner: { username: string; avatarUrl: string; id: string }
-    title: string
-    startDate: string
-    endDate: string
-    country: string
-    city: string
-    sharedUsers: { id: number; username: string; avatarUrl: string }[]
-  }
-  onClick: (id: number) => void
-  onTripDeleted: () => void
+  trip: Trip;
+  onClick: (id: number) => void;
+  onTripDeleted?: () => void;
+  viewOnly?: boolean;
 }
 
-const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
-  const imageUrl = usePexelsImage(trip.city)
-  const { authUser } = useAuthContext()
-  const isOwner = authUser?.id === trip.owner.id
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [visibility, setVisibility] = useState<"public" | "private">("public")
-  const { deleteTrip, isDeleting } = useDeleteTrip()
-  const { updatePrivacy } = useUpdatePrivacy()
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false }: TripCardProps) => {
+  const imageUrl = usePexelsImage(trip.city);
+  const { authUser } = useAuthContext();
+  const isOwner = authUser?.id === trip.owner?.id;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [visibility, setVisibility] = useState<"public" | "private">(trip.privacy.toLowerCase() as "public" | "private");
+  const { deleteTrip, isDeleting } = useDeleteTrip();
+  const { updatePrivacy } = useUpdatePrivacy();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setShowDeleteConfirm(true)
-  }
+    e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
 
   const confirmDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     try {
-      await deleteTrip(trip.id.toString())
-      setMenuOpen(false)
-      setShowDeleteConfirm(false)
-      onTripDeleted()
+      await deleteTrip(trip.id.toString());
+      setMenuOpen(false);
+      setShowDeleteConfirm(false);
+      if (onTripDeleted) {
+        onTripDeleted();
+      }
     } catch (error) {
-      console.error("Failed to delete trip:", error)
-      // You might want to show an error toast or message here
+      console.error("Failed to delete trip:", error);
     }
-  }
+  };
 
   const cancelDelete = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setShowDeleteConfirm(false)
-  }
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
 
   const toggleVisibility = async (value: "public" | "private") => {
-    setVisibility(value)
+    setVisibility(value);
     try {
-      await updatePrivacy(trip.id, value.toUpperCase() as "PUBLIC" | "PRIVATE")
+      await updatePrivacy(trip.id, value.toUpperCase() as "PUBLIC" | "PRIVATE");
     } catch (err) {
-      console.error("Failed to update visibility:", err)
+      console.error("Failed to update visibility:", err);
     }
-  }
+  };
 
   return (
     <div
@@ -69,25 +63,31 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
       onClick={() => onClick(trip.id)}
     >
       <header className="flex items-center justify-between p-4">
-        <div className="flex items-center">
-          <div className="avatar w-9 h-9 mx-2">
-            <img
-              src={trip.owner.avatarUrl || "/default-avatar.png"}
-              alt={trip.owner.username}
-              className="rounded-full w-full h-full object-cover"
-            />
+        {trip.owner ? (
+          <div className="flex items-center">
+            <div className="avatar w-9 h-9 mx-2">
+              <img
+                src={trip.owner.avatarUrl || "/default-avatar.png"}
+                alt={trip.owner.username}
+                className="rounded-full w-full h-full object-cover"
+              />
+            </div>
+            <p className="text-sm font-medium text-custom-2">
+              {trip.owner.username}
+            </p>
           </div>
-          <p className="text-sm font-medium text-custom-2">
-            {trip.owner.username}
-          </p>
-        </div>
+        ) : (
+          <div className="flex items-center">
+            <p className="text-sm font-medium text-custom-2">Unknown Owner</p>
+          </div>
+        )}
 
-        {isOwner && (
+        {isOwner && !viewOnly && (
           <div className="relative z-10">
             <FiMoreVertical
               onClick={(e) => {
-                e.stopPropagation()
-                setMenuOpen(!menuOpen)
+                e.stopPropagation();
+                setMenuOpen(!menuOpen);
               }}
               className="text-gray-500 hover:text-black cursor-pointer size-6"
             />
@@ -171,30 +171,32 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
         <div className="p-4">
           <h2 className="text-lg font-bold text-custom-2">{trip.title}</h2>
           <p className="text-sm text-custom-2">
-            {new Date(trip.startDate).toLocaleDateString("vi-VN")} - {new Date(trip.endDate).toLocaleDateString("vi-VN")}
+            {new Date(trip.startDate).toLocaleDateString("vi-VN")} -{" "}
+            {new Date(trip.endDate).toLocaleDateString("vi-VN")}
           </p>
 
-          {/* Shared Users Avatars */}
-          <div className="flex items-center mt-2 space-x-1 relative group">
-            {trip.sharedUsers.slice(0, 5).map((user) => (
-              <img
-                key={user.id}
-                src={user.avatarUrl || "/default-avatar.png"}
-                alt={user.username}
-                title={user.username}
-                className="w-6 h-6 rounded-full border border-white object-cover"
-              />
-            ))}
-            {trip.sharedUsers.length > 5 && (
-              <span className="text-xs text-gray-500 ml-2 group-hover:block hidden absolute left-[calc(5*1.5rem)] top-1">
-                +{trip.sharedUsers.length - 5} more
-              </span>
-            )}
-          </div>
+          {trip.sharedUsers && trip.sharedUsers.length > 0 && (
+            <div className="flex items-center mt-2 space-x-1 relative group">
+              {trip.sharedUsers.slice(0, 5).map((user) => (
+                <img
+                  key={user.id}
+                  src={user.avatarUrl || "/default-avatar.png"}
+                  alt={user.username}
+                  title={user.username}
+                  className="w-6 h-6 rounded-full border border-white object-cover"
+                />
+              ))}
+              {trip.sharedUsers.length > 5 && (
+                <span className="text-xs text-gray-500 ml-2 group-hover:block hidden absolute left-[calc(5*1.5rem)] top-1">
+                  +{trip.sharedUsers.length - 5} more
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TripCard
+export default TripCard;
