@@ -4,23 +4,32 @@ import useGetTrips from "../hooks/trips/useGetTrips"
 import NewTripModal from "./NewTripModal"
 import TripCard from "./TripCard"
 import Globe from 'react-globe.gl'
+import { Trip } from "../types/trip"
 
-const Mainboard = () => {
+interface MainboardProps {
+  userTrips?: Trip[]
+  isProfileView?: boolean
+}
+
+const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) => {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const { trips, loading, refetch } = useGetTrips()
+  const { trips: authUserTrips, loading, refetch } = useGetTrips()
   const [showMap, setShowMap] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const navigate = useNavigate()
 
+  const displayTrips = isProfileView ? userTrips : authUserTrips
+  const isLoading = isProfileView ? false : loading
+
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === trips.length - 1 ? 0 : prevIndex + 1
+      prevIndex === displayTrips.length - 1 ? 0 : prevIndex + 1
     )
   }
 
   const handlePrev = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? trips.length - 1 : prevIndex - 1
+      prevIndex === 0 ? displayTrips.length - 1 : prevIndex - 1
     )
   }
 
@@ -33,9 +42,10 @@ const Mainboard = () => {
   }
 
   const handleTripAddedOrDeleted = () => {
-    refetch()
-    // Reset to first slide when the trips list changes
-    setCurrentIndex(0)
+    if (!isProfileView) {
+      refetch()
+      setCurrentIndex(0)
+    }
   }
 
   const handleModalClose = () => {
@@ -51,13 +61,15 @@ const Mainboard = () => {
           } overflow-hidden`}
         >
           <div className="flex my-3">
-            <button
-              className="btn btn-dash btn-neutral"
-              onClick={() => setShowModal(true)}
-            >
-              NEW
-            </button>
-            {!loading && trips.length > 0 ? (
+            {!isProfileView && (
+              <button
+                className="btn btn-dash btn-neutral"
+                onClick={() => setShowModal(true)}
+              >
+                NEW
+              </button>
+            )}
+            {!isLoading && displayTrips.length > 0 ? (
               <div className="flex flex-row justify-end items-center w-full h-10">
                 <button
                   onClick={handlePrev}
@@ -75,34 +87,36 @@ const Mainboard = () => {
             ) : null}
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <p className="text-custom-2 text-center mt-10">Loading trips...</p>
-          ) : trips.length > 0 ? (
+          ) : displayTrips.length > 0 ? (
             <div className="overflow-hidden w-full">
               <div
                 className="flex transition-transform duration-500 ease-in-out"
                 style={{
                   transform: `translateX(-${currentIndex * 100}%)`,
-                  width: `${trips.length * 100}%`,
+                  width: `${displayTrips.length * 100}%`,
                 }}
               >
-                {trips.map((trip) => (
+                {displayTrips.map((trip) => (
                   <div className="w-full flex-shrink-0" key={trip.id}>
                     <TripCard
                       trip={trip}
-                      onClick={() => handleTripClick(trip.id)} // Pass the trip ID when clicked
-                      onTripDeleted={handleTripAddedOrDeleted}
+                      onClick={() => handleTripClick(trip.id)}
+                      onTripDeleted={!isProfileView ? handleTripAddedOrDeleted : undefined}
+                      viewOnly={isProfileView}
                     />
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-custom-2">No trips available</p>
+            <p className="text-custom-2">
+              {isProfileView ? "Người dùng này chưa có chuyến đi công khai nào" : "No trips available"}
+            </p>
           )}
         </div>
 
-        {/* Map panel */}
         <div
           className={`transition-all duration-500 ease-in-out ${
             showMap ? "w-1/2 opacity-100" : "w-0 h-0 opacity-0"
@@ -139,7 +153,7 @@ const Mainboard = () => {
         </div>
       )}
 
-      {showModal && (
+      {!isProfileView && showModal && (
         <NewTripModal
           modalId="create_trip_modal"
           onClose={handleModalClose}

@@ -8,35 +8,45 @@ interface User {
   avatarUrl?: string;
 }
 
-type MenuItem = "Trip"
+interface SidebarProps {
+  profileUser?: User; // Optional prop for profile view
+}
 
-const Sidebar = () => {
+type MenuItem = "Trip";
+
+const Sidebar = ({ profileUser }: SidebarProps) => {
   const { authUser } = useAuthContext();
   const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip")
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [isSearching, setIsSearching] = useState(false);
 
-  // Debounce search to avoid sending a request on every keystroke
+  // Use profileUser if provided, otherwise fall back to authUser
+  const displayUser = profileUser || authUser;
+
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.length >= 2) {
         setIsSearching(true);
         searchUsers();
       } else {
-        setSearchResults([]); // Clear results if query length is less than 2
+        setSearchResults([]);
         setIsSearching(false);
       }
-    }, 300) // Wait 300ms after user stops typing
+    }, 300);
 
-    return () => clearTimeout(timer); // Cleanup the timer when searchQuery changes
-  }, [searchQuery])
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const searchUsers = async () => {
     try {
-      const response = await fetch(`/api/users/search?query=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(
+        `/api/users/search?query=${encodeURIComponent(searchQuery)}`,
+        { credentials: "include" }
+      );
       const data = await response.json();
-      setSearchResults(data.data.users || []); // Ensure we access the users data correctly
+      setSearchResults(data.data.users || []);
     } catch (error) {
       console.error("Error searching users:", error);
       setSearchResults([]);
@@ -55,7 +65,7 @@ const Sidebar = () => {
         <div className="avatar">
           <div className="w-24 rounded-full">
             <img
-              src={authUser?.avatarUrl || "/default-avatar.png"}
+              src={displayUser?.avatarUrl || "/default-avatar.png"}
               alt="avatar"
             />
           </div>
@@ -63,9 +73,9 @@ const Sidebar = () => {
 
         <div className="flex flex-col justify-start items-start">
           <h1 className="text-xl text-black font-bold block">
-            {authUser?.fullname || "Loading..."}
+            {displayUser?.fullname || "Loading..."}
           </h1>
-          <p className="text-sm text-black">{authUser?.username || ""}</p>
+          <p className="text-sm text-black">@{displayUser?.username || ""}</p>
         </div>
 
         <div className="flex flex-row mb-5">
@@ -110,32 +120,38 @@ const Sidebar = () => {
           />
         </label>
 
-        {searchQuery.length >= 2 && (
-          <div className="absolute top-12 left-0 w-full bg-white shadow-lg rounded-lg max-h-96 overflow-y-auto z-10">
+        {searchQuery.length >= 1 && (
+          <div className="absolute top-12 left-0 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-[320px] overflow-y-auto z-10 flex flex-col">
             {isSearching ? (
-              <div className="p-2 text-gray-500">Searching...</div>
+              <div className="p-2 text-gray-500 text-center text-sm">
+                Searching...
+              </div>
             ) : (
               <>
                 {searchResults.length > 0 ? (
-                  searchResults.map((user) => (
+                  searchResults.slice(0, 5).map((user) => (
                     <a
                       key={user.id}
-                      href={`/profile/${user.username}`}
-                      className="flex items-center p-2 hover:bg-gray-100"
+                      href={user.username === authUser?.username ? "/home" : `/profile/${user.username}`}
+                      className="flex items-center p-2 border-b border-gray-200 hover:bg-gray-50 last:border-b-0 w-full"
                     >
                       <img
                         src={user.avatarUrl || "/default-avatar.png"}
                         alt={user.username}
                         className="w-8 h-8 rounded-full mr-2"
                       />
-                      <div>
-                        <p className="font-semibold">{user.fullname}</p>
-                        <p className="text-sm text-gray-600">@{user.username}</p>
+                      <div className="flex flex-col">
+                        <p className="text-sm font-medium text-gray-800">
+                          {user.fullname}
+                        </p>
+                        <p className="text-xs text-gray-600">@{user.username}</p>
                       </div>
                     </a>
                   ))
                 ) : (
-                  <div className="p-2 text-gray-500">No users found</div>
+                  <div className="p-2 text-gray-500 text-center text-sm">
+                    No users found
+                  </div>
                 )}
               </>
             )}
@@ -145,7 +161,9 @@ const Sidebar = () => {
 
       <li className="my-2">
         <a
-          className={`font-jembrush text-3xl ${activeMenu === "Trip" ? "menu-active" : ""}`}
+          className={`font-jembrush text-3xl ${
+            activeMenu === "Trip" ? "menu-active" : ""
+          }`}
           onClick={() => handleMenuClick("Trip")}
         >
           Trip
