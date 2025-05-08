@@ -1,17 +1,17 @@
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useState } from "react"
 
 type AuthUserType = {
-  id: string;
-  fullname: string;
-  username: string;
-  email: string;
-  gender: string;
-  avatarUrl: string;
+  id: string
+  fullname: string
+  username: string
+  email: string
+  gender: string
+  avatarUrl: string
 }
 
 const AuthContext = createContext<{
-  authUser: AuthUserType | null;
-  setAuthUser: Dispatch<SetStateAction<AuthUserType | null>>;
+  authUser: AuthUserType | null
+  setAuthUser: Dispatch<SetStateAction<AuthUserType | null>>
   isLoading: boolean
 }>({
   authUser: null,

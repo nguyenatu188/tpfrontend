@@ -1,7 +1,7 @@
 export function useUpdatePrivacy() {
-  const updatePrivacy = async (tripId: number, privacy: "PUBLIC" | "PRIVATE") => {
+  const updatePrivacy = async (tripId: string, privacy: "PUBLIC" | "PRIVATE") => {
     try {
-      const res = await fetch(`/api/trips/${tripId}/privacy`, {
+      const res = await fetch(`/api/trip/${tripId}/privacy`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useAuthContext } from "../context/AuthContext";
+import { useState, useEffect } from "react"
+import { useAuthContext } from "../context/AuthContext"
 
 interface User {
   id: string;
@@ -8,13 +8,13 @@ interface User {
   avatarUrl?: string;
 }
 
-type MenuItem = "Trip" | "Countries";
+type MenuItem = "Trip"
 
 const Sidebar = () => {
   const { authUser } = useAuthContext();
-  const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip");
+  const [activeMenu, setActiveMenu] = useState<MenuItem>("Trip")
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<User[]>([])
   const [isSearching, setIsSearching] = useState(false);
 
   // Debounce search to avoid sending a request on every keystroke
@@ -27,10 +27,10 @@ const Sidebar = () => {
         setSearchResults([]); // Clear results if query length is less than 2
         setIsSearching(false);
       }
-    }, 300); // Wait 300ms after user stops typing
+    }, 300) // Wait 300ms after user stops typing
 
     return () => clearTimeout(timer); // Cleanup the timer when searchQuery changes
-  }, [searchQuery]);
+  }, [searchQuery])
 
   const searchUsers = async () => {
     try {
@@ -43,11 +43,11 @@ const Sidebar = () => {
     } finally {
       setIsSearching(false);
     }
-  };
+  }
 
   const handleMenuClick = (menu: MenuItem) => {
     setActiveMenu(menu);
-  };
+  }
 
   return (
     <ul className="menu bg-custom w-56 h-screen w-auto border-r-1 border-[#dde9ed] text-black">
@@ -151,16 +151,8 @@ const Sidebar = () => {
           Trip
         </a>
       </li>
-      <li>
-        <a
-          className={`font-jembrush text-3xl ${activeMenu === "Countries" ? "menu-active" : ""}`}
-          onClick={() => handleMenuClick("Countries")}
-        >
-          Countries
-        </a>
-      </li>
     </ul>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

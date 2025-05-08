@@ -1,52 +1,53 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import useGetTrips from "../hooks/trips/useGetTrips";
-import NewTripModal from "./NewTripModal";
-import TripCard from "./TripCard";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import useGetTrips from "../hooks/trips/useGetTrips"
+import NewTripModal from "./NewTripModal"
+import TripCard from "./TripCard"
+import Globe from 'react-globe.gl'
 
 const Mainboard = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const { trips, loading, refetch } = useGetTrips();
-  const [showMap, setShowMap] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const { trips, loading, refetch } = useGetTrips()
+  const [showMap, setShowMap] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const navigate = useNavigate()
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === trips.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+    )
+  }
 
   const handlePrev = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? trips.length - 1 : prevIndex - 1
-    );
-  };
+    )
+  }
 
-  const handleTripClick = (id: number) => {
-    navigate(`/tripdetail/${id}/plan`);
-  };
+  const handleTripClick = (id: string) => {
+    navigate(`/tripdetail/${id}/plan`)
+  }
 
   const toggleMap = () => {
-    setShowMap(!showMap);
-  };
+    setShowMap(!showMap)
+  }
 
   const handleTripAddedOrDeleted = () => {
-    refetch();
+    refetch()
     // Reset to first slide when the trips list changes
-    setCurrentIndex(0);
-  };
+    setCurrentIndex(0)
+  }
 
   const handleModalClose = () => {
-    setShowModal(false);
-  };
+    setShowModal(false)
+  }
 
   return (
     <div className="flex flex-col w-full px-4 bg-custom">
-      <div className="flex w-full">
+      <div className="flex w-full justify-center mt-10">
         <div
           className={`transition-all duration-500 ease-in-out ${
-            showMap ? "w-1/2" : "max-w-5xl"
+            showMap ? "mr-10" : "max-w-5xl"
           } overflow-hidden`}
         >
           <div className="flex my-3">
@@ -85,15 +86,6 @@ const Mainboard = () => {
                   width: `${trips.length * 100}%`,
                 }}
               >
-                {/* {trips.map((trip) => (
-                  <div className="w-full flex-shrink-0" key={trip.id}>
-                    <TripCard
-                      trip={trip}
-                      onClick={handleTripClick}
-                      onTripDeleted={handleTripAddedOrDeleted}
-                    />
-                  </div>
-                ))} */}
                 {trips.map((trip) => (
                   <div className="w-full flex-shrink-0" key={trip.id}>
                     <TripCard
@@ -113,25 +105,31 @@ const Mainboard = () => {
         {/* Map panel */}
         <div
           className={`transition-all duration-500 ease-in-out ${
-            showMap ? "w-1/2 opacity-100 h-screen" : "w-0 opacity-0"
+            showMap ? "w-1/2 opacity-100" : "w-0 h-0 opacity-0"
           } bg-gray-200 overflow-hidden`}
         >
           <div className="relative h-full">
             <button
               onClick={toggleMap}
-              className="absolute top-4 right-4 btn btn-primary bg-blue-400 text-white px-4 py-2 rounded-lg"
+              className="absolute top-4 right-4 btn btn-primary bg-blue-400 text-white px-4 py-2 rounded-lg z-10"
             >
               Hide Map
             </button>
-            <div className="flex items-center justify-center h-full">
-              <p className="text-lg font-bold">Map View (Placeholder)</p>
+            <div className="h-full w-full flex justify-center items-center">
+              <Globe
+                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+                bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+                backgroundColor="rgba(0,0,0,0)"
+                width={window.innerWidth / 2}
+                height={window.innerHeight}
+              />
             </div>
           </div>
         </div>
       </div>
 
       {!showMap && (
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center">
           <button
             onClick={toggleMap}
             className="btn btn-primary bg-blue-400 text-white px-4 py-2 rounded-lg mt-4"
@@ -149,7 +147,7 @@ const Mainboard = () => {
         />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Mainboard;
+export default Mainboard

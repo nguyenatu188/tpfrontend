@@ -8,25 +8,27 @@ import { useUpdatePrivacy } from "../hooks/trips/useUpdatePrivacy"
 
 interface TripCardProps {
   trip: {
-    id: number
+    id: string
     owner: { username: string; avatarUrl: string; id: string }
     title: string
     startDate: string
     endDate: string
     country: string
     city: string
-    sharedUsers: { id: number; username: string; avatarUrl: string }[]
+    privacy: "PUBLIC" | "PRIVATE"
+    sharedUsers: { id: string; username: string; avatarUrl: string }[]
   }
-  onClick: (id: number) => void
+  onClick: (id: string) => void
   onTripDeleted: () => void
+  onPrivacyUpdated?: () => void
 }
 
-const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
+const TripCard = ({ trip, onClick, onTripDeleted, onPrivacyUpdated }: TripCardProps) => {
   const imageUrl = usePexelsImage(trip.city)
   const { authUser } = useAuthContext()
   const isOwner = authUser?.id === trip.owner.id
   const [menuOpen, setMenuOpen] = useState(false)
-  const [visibility, setVisibility] = useState<"public" | "private">("public")
+  const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">(trip.privacy)
   const { deleteTrip, isDeleting } = useDeleteTrip()
   const { updatePrivacy } = useUpdatePrivacy()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -39,7 +41,7 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
   const confirmDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      await deleteTrip(trip.id.toString())
+      await deleteTrip(trip.id)
       setMenuOpen(false)
       setShowDeleteConfirm(false)
       onTripDeleted()
@@ -54,14 +56,16 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
     setShowDeleteConfirm(false)
   }
 
-  const toggleVisibility = async (value: "public" | "private") => {
-    setVisibility(value)
+  const toggleVisibility = async (value: "PUBLIC" | "PRIVATE") => {
+    if (visibility === value) return
     try {
-      await updatePrivacy(trip.id, value.toUpperCase() as "PUBLIC" | "PRIVATE")
+      await updatePrivacy(trip.id, value)
+      setVisibility(value)
+      if (onPrivacyUpdated) onPrivacyUpdated()
     } catch (err) {
       console.error("Failed to update visibility:", err)
     }
-  }
+  }  
 
   return (
     <div
@@ -130,8 +134,8 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
                     <input
                       type="radio"
                       name={`visibility-${trip.id}`}
-                      checked={visibility === "public"}
-                      onChange={() => toggleVisibility("public")}
+                      checked={visibility === "PUBLIC"}
+                      onChange={() => toggleVisibility("PUBLIC")}
                     />
                     <FiGlobe className="ml-1 mr-1" /> Public
                   </label>
@@ -139,8 +143,8 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
                     <input
                       type="radio"
                       name={`visibility-${trip.id}`}
-                      checked={visibility === "private"}
-                      onChange={() => toggleVisibility("private")}
+                      checked={visibility === "PRIVATE"}
+                      onChange={() => toggleVisibility("PRIVATE")}
                     />
                     <FiLock className="ml-1 mr-1" /> Private
                   </label>
@@ -152,13 +156,13 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
       </header>
 
       <div className="flex flex-col">
-        <div className="relative h-80">
+        <div className="relative h-80 w-full overflow-hidden">
           <img
             src={imageUrl || "https://picsum.photos/seed/landscape/640/360"}
             alt={trip.city}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover absolute top-0 left-0"
           />
-          <div className="absolute top-2 left-2 flex space-x-2">
+          <div className="absolute top-2 left-2 flex space-x-2 z-10">
             <span className="bg-white text-custom-2 text-xs font-semibold px-2 py-1 rounded-full shadow">
               🕒 {calculateDuration(trip.startDate, trip.endDate)}
             </span>
@@ -167,6 +171,7 @@ const TripCard = ({ trip, onClick, onTripDeleted }: TripCardProps) => {
             </span>
           </div>
         </div>
+
 
         <div className="p-4">
           <h2 className="text-lg font-bold text-custom-2">{trip.title}</h2>

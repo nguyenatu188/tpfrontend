@@ -1,17 +1,18 @@
 export type Trip = {
-  id: number
+  id: string
   title: string
   startDate: string
   endDate: string
   country: string
   city: string
+  privacy: "PUBLIC" | "PRIVATE"
   owner: {
     id: string
     username: string
     avatarUrl: string
   }
   sharedUsers: {
-    id: number
+    id: string
     username: string
     avatarUrl: string
   }[]
