@@ -34,7 +34,7 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
   }
 
   const handleTripClick = (id: string) => {
-    navigate(`/tripdetail/${id}/plan`)
+    navigate(`/tripdetail/${id}/activity`)
   }
 
   const toggleMap = () => {
@@ -57,7 +57,7 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
       <div className="flex w-full justify-center mt-10">
         <div
           className={`transition-all duration-500 ease-in-out ${
-            showMap ? "mr-10" : "max-w-5xl"
+            showMap ? "mr-10" : "w-5xl"
           } overflow-hidden`}
         >
           <div className="flex my-3">
