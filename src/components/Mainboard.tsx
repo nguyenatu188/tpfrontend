@@ -21,7 +21,7 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
   const isLoading = isProfileView ? false : loading
 
   const handleTripClick = (id: string) => {
-    navigate(`/tripdetail/${id}/plan`)
+    navigate(`/tripdetail/${id}/activity`)
   }
 
   const toggleMap = () => {

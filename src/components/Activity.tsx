@@ -11,15 +11,15 @@ interface Destination {
   longitude: number;
 }
 
-interface PlanProps {
+interface ActivityProps {
   id: string;
 }
 
-const Plan: React.FC<PlanProps> = ({ id }) => {
+const Activity: React.FC<ActivityProps> = ({ id }) => {
   const trip = tripsData.find((trip) => trip.id === parseInt(id));
   const [destinations, setDestinations] = useState<Destination[]>(trip?.destinationsList || []);
   const [nights, setNights] = useState<number[]>(destinations.map((dest) => dest.nights));
-  const [activeTab, setActiveTab] = useState<"DESTINATIONS" | "DAY BY DAY" | "SHOW NOTES">("DESTINATIONS");
+  const [activeTab, setActivityeTab] = useState<"DESTINATIONS" | "DAY BY DAY" | "SHOW NOTES">("DESTINATIONS");
   const [showAddDestination, setShowAddDestination] = useState(false);
   const [newDestination, setNewDestination] = useState({
     name: "",
@@ -134,7 +134,7 @@ const Plan: React.FC<PlanProps> = ({ id }) => {
       <div className="p-4 bg-white border-b">
         <div className="flex space-x-4">
           <button
-            onClick={() => setActiveTab("DESTINATIONS")}
+            onClick={() => setActivityeTab("DESTINATIONS")}
             className={`pb-2 font-semibold ${
               activeTab === "DESTINATIONS"
                 ? "text-custom border-b-2 border-custom"
@@ -144,7 +144,7 @@ const Plan: React.FC<PlanProps> = ({ id }) => {
             DESTINATIONS
           </button>
           <button
-            onClick={() => setActiveTab("DAY BY DAY")}
+            onClick={() => setActivityeTab("DAY BY DAY")}
             className={`pb-2 font-semibold ${
               activeTab === "DAY BY DAY"
                 ? "text-custom border-b-2 border-custom"
@@ -154,7 +154,7 @@ const Plan: React.FC<PlanProps> = ({ id }) => {
             DAY BY DAY
           </button>
           <button
-            onClick={() => setActiveTab("SHOW NOTES")}
+            onClick={() => setActivityeTab("SHOW NOTES")}
             className={`pb-2 flex items-center space-x-1 ${
               activeTab === "SHOW NOTES"
                 ? "text-custom border-b-2 border-teal-500"
@@ -498,4 +498,4 @@ const Plan: React.FC<PlanProps> = ({ id }) => {
   );
 };
 
-export default Plan;
+export default Activity;

@@ -18,7 +18,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
       <nav className="flex-1 space-y-4">
 
         <NavLink
-          to={`/tripdetail/${id}/plan`}
+          to={`/tripdetail/${id}/activity`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
