@@ -5,13 +5,13 @@ import Mainboard from "../components/Mainboard";
 
 const HomePage = () => {
   return (
-    <>
-    <Header />
-    <div className="flex flex-row h-screen">
-      <Sidebar />
-      <Mainboard/>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <Header />
+      <div className="flex flex-row flex-1 overflow-hidden">
+        <Sidebar />
+        <Mainboard />
+      </div>
     </div>
-  </>
   );
 };
 

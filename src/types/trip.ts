@@ -6,6 +6,8 @@ export type Trip = {
   country: string
   city: string
   privacy: "PUBLIC" | "PRIVATE"
+  lat?: number
+  lng?: number
   owner: {
     id: string
     username: string

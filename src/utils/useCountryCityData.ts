@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 export type Country = {
   name: string
   code: string
+  latlng: [number, number];
 }
 
 type CountryAPIResponse = {

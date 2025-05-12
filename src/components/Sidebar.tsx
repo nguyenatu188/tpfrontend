@@ -60,7 +60,7 @@ const Sidebar = ({ profileUser }: SidebarProps) => {
   }
 
   return (
-    <ul className="menu bg-custom w-56 h-screen w-auto border-r-1 border-[#dde9ed] text-black">
+    <ul className="menu bg-custom w-64 border-r-1 border-[#dde9ed] text-black">
       <li className="border-b-1 border-[#dde9ed] mt-5">
         <div className="avatar">
           <div className="w-24 rounded-full">

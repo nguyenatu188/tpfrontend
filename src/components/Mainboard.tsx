@@ -12,7 +12,6 @@ interface MainboardProps {
 }
 
 const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const { trips: authUserTrips, loading, refetch } = useGetTrips()
   const [showMap, setShowMap] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -20,18 +19,6 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
 
   const displayTrips = isProfileView ? userTrips : authUserTrips
   const isLoading = isProfileView ? false : loading
-
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === displayTrips.length - 1 ? 0 : prevIndex + 1
-    )
-  }
-
-  const handlePrev = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? displayTrips.length - 1 : prevIndex - 1
-    )
-  }
 
   const handleTripClick = (id: string) => {
     navigate(`/tripdetail/${id}/plan`)
@@ -44,7 +31,6 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
   const handleTripAddedOrDeleted = () => {
     if (!isProfileView) {
       refetch()
-      setCurrentIndex(0)
     }
   }
 
@@ -52,14 +38,31 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
     setShowModal(false)
   }
 
+  const carouselItems = displayTrips.map((trip, index) => (
+    <div 
+      key={trip.id} 
+      id={`slide${index}`} 
+      className="carousel-item relative w-full"
+    >
+      <div className="w-full mx-auto px-4">
+        <TripCard
+          trip={trip}
+          onClick={() => handleTripClick(trip.id)}
+          onTripDeleted={!isProfileView ? handleTripAddedOrDeleted : undefined}
+          viewOnly={isProfileView}
+        />
+      </div>
+      <div className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+        <a href={`#slide${index === 0 ? displayTrips.length - 1 : index - 1}`} className="btn btn-circle border-none btn-md mx-2 bg-custom text-black">❮</a>
+        <a href={`#slide${index === displayTrips.length - 1 ? 0 : index + 1}`} className="btn btn-circle border-none btn-md mx-2 bg-custom text-black">❯</a>
+      </div>
+    </div>
+  ))
+
   return (
-    <div className="flex flex-col w-full px-4 bg-custom">
+    <div className="flex flex-col w-full px-4 overflow-hidden bg-custom">
       <div className="flex w-full justify-center mt-10">
-        <div
-          className={`transition-all duration-500 ease-in-out ${
-            showMap ? "mr-10" : "max-w-5xl"
-          } overflow-hidden`}
-        >
+        <div className="transition-all duration-500 ease-in-out w-full max-w-xl">
           <div className="flex my-3">
             {!isProfileView && (
               <button
@@ -69,47 +72,14 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
                 NEW
               </button>
             )}
-            {!isLoading && displayTrips.length > 0 ? (
-              <div className="flex flex-row justify-end items-center w-full h-10">
-                <button
-                  onClick={handlePrev}
-                  className="btn btn-circle border-none btn-md mx-2 bg-custom text-black"
-                >
-                  ❮
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="btn btn-circle border-none btn-md mx-2 bg-custom text-black"
-                >
-                  ❯
-                </button>
-              </div>
-            ) : null}
           </div>
 
           {isLoading ? (
             <p className="text-custom-2 text-center mt-10">Loading trips...</p>
           ) : displayTrips.length > 0 ? (
-            <div className="overflow-hidden w-full">
-              <div
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{
-                  transform: `translateX(-${currentIndex * 100}%)`,
-                  width: `${displayTrips.length * 100}%`,
-                }}
-              >
-                {displayTrips.map((trip) => (
-                  <div className="w-full flex-shrink-0" key={trip.id}>
-                    <TripCard
-                      trip={trip}
-                      onClick={() => handleTripClick(trip.id)}
-                      onTripDeleted={!isProfileView ? handleTripAddedOrDeleted : undefined}
-                      viewOnly={isProfileView}
-                    />
-                  </div>
-                ))}
+              <div className="carousel w-full">
+                {carouselItems}
               </div>
-            </div>
           ) : (
             <p className="text-custom-2">
               {isProfileView ? "Người dùng này chưa có chuyến đi công khai nào" : "No trips available"}
@@ -119,23 +89,26 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
 
         <div
           className={`transition-all duration-500 ease-in-out ${
-            showMap ? "w-1/2 opacity-100" : "w-0 h-0 opacity-0"
-          } bg-gray-200 overflow-hidden`}
+            showMap ? "ml-20 w-2/5 opacity-100" : "w-0 h-0 opacity-0"
+          } h-auto max-h-[600px] bg-gray-200 overflow-hidden`}
         >
-          <div className="relative h-full">
+          <div className="relative w-full h-full">
             <button
               onClick={toggleMap}
               className="absolute top-4 right-4 btn btn-primary bg-blue-400 text-white px-4 py-2 rounded-lg z-10"
             >
               Hide Map
             </button>
-            <div className="h-full w-full flex justify-center items-center">
+            <div className="h-[600px] w-full flex justify-center items-center">
               <Globe
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundColor="rgba(0,0,0,0)"
-                width={window.innerWidth / 2}
-                height={window.innerHeight}
+                pointsData={displayTrips.map(trip => ({
+                  lat: trip.lat,
+                  lng: trip.lng,
+                  name: trip.title
+                }))}
               />
             </div>
           </div>

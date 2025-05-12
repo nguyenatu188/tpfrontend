@@ -15,6 +15,8 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [privacy, setPrivacy] = useState("")
+  const [latlng, setLatlng] = useState<[number, number]>()
+
 
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
@@ -62,7 +64,10 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
         startDate,
         endDate,
         privacy: privacy as "PRIVATE" | "PUBLIC",
+        lat: latlng?.[0] ?? 0,
+        lng: latlng?.[1] ?? 0,
       })
+
       
       // Call the onTripAdded callback if provided
       if (onTripAdded) {
@@ -81,6 +86,13 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
     setCountry(selectedCode)
     setCity("")
     fetchCities(selectedCode)
+
+    const selected = countries.find((c) => c.code === selectedCode)
+    if (selected?.latlng) {
+      setLatlng(selected.latlng)
+    } else {
+      setLatlng([0, 0])
+    }
   }
 
   return (

@@ -10,6 +10,8 @@ export const useAddNewTrip = () => {
     startDate: string;
     endDate: string;
     privacy: "PRIVATE" | "PUBLIC";
+    lat: number;
+    lng: number;
   }) => {
     setIsLoading(true)
     try {
