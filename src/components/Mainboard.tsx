@@ -101,14 +101,23 @@ const Mainboard = ({ userTrips = [], isProfileView = false }: MainboardProps) =>
             </button>
             <div className="h-[600px] w-full flex justify-center items-center">
               <Globe
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+                globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                backgroundColor="rgba(0,0,0,0)"
+                backgroundColor="rgba(255,255,255,0)"
+                atmosphereColor="rgba(184, 224, 255, 0.8)"
+                atmosphereAltitude={0.25}
                 pointsData={displayTrips.map(trip => ({
                   lat: trip.lat,
                   lng: trip.lng,
-                  name: trip.title
+                  name: trip.title,
+                  color: 'red',
+                  radius: 0.5,
                 }))}
+                pointLabel="name"
+                pointRadius="radius"
+                pointColor="color"
+                pointAltitude={0.1}
+                pointResolution={12}
               />
             </div>
           </div>

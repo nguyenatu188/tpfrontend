@@ -22,7 +22,7 @@ function App() {
       <Route path="/forgetpassword" element={!authUser ? <ForgetPassword /> : <Navigate to="/home" />} />
       <Route path="/reset-password" element={!authUser ? <ResetPassword /> : <Navigate to="/home" />} />
 
-      <Route path="/profile/:username" element={<UserProfilePage />} />
+      <Route path="/profile/:username" element={authUser ? <UserProfilePage /> : <Navigate to="/login" />} />
     </Routes>
   )
 }
