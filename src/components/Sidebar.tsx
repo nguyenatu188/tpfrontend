@@ -114,7 +114,7 @@ const Sidebar = ({ profileUser }: SidebarProps) => {
           </svg>
           <input
             type="search"
-            placeholder="Search users"
+            placeholder="Tìm theo username hoặc fullname"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
