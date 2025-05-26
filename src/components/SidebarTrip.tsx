@@ -2,10 +2,10 @@ import { NavLink, Link } from "react-router-dom"
 
 // Định nghĩa kiểu cho props của SidebarTrip
 interface SidebarTripProps {
-  id: string
+  tripId: string
 }
 
-const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
+const SidebarTrip: React.FC<SidebarTripProps> = ({ tripId }) => {
   return (
     <div className="flex flex-col h-full p-4">
       {/* Logo */}
@@ -18,7 +18,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
       <nav className="flex-1 space-y-4">
 
         <NavLink
-          to={`/tripdetail/${id}/activity`}
+          to={`/tripdetail/${tripId}/activity`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -49,7 +49,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
         </NavLink>
 
         <NavLink
-          to={`/tripdetail/${id}/accommodation`}
+          to={`/tripdetail/${tripId}/accommodation`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -74,7 +74,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
         </NavLink>
 
         <NavLink
-          to={`/tripdetail/${id}/transport`}
+          to={`/tripdetail/${tripId}/transport`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -99,7 +99,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
         </NavLink>
 
         <NavLink
-          to={`/tripdetail/${id}/budget`}
+          to={`/tripdetail/${tripId}/budget`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -124,7 +124,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
         </NavLink>
 
         <NavLink
-          to={`/tripdetail/${id}/packing`}
+          to={`/tripdetail/${tripId}/packing`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -149,7 +149,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
         </NavLink>
 
         <NavLink
-          to={`/tripdetail/${id}/collection`}
+          to={`/tripdetail/${tripId}/collection`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"
@@ -173,7 +173,7 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ id }) => {
           <span>Collection</span>
         </NavLink>
         <NavLink
-          to={`/tripdetail/${id}/discover`}
+          to={`/tripdetail/${tripId}/discover`}
           className={({ isActive }) =>
             isActive
               ? "flex items-center space-x-2 p-2 bg-text-custom text-white rounded-lg"

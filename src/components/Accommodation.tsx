@@ -1,314 +1,320 @@
-import React, { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react"
+import type { Accommodation } from "../types/accommodation"
+import { useAuthContext } from "../context/AuthContext"
+import { useAccommodation } from "../hooks/useAccommodation"
+import { useNavigate } from "react-router-dom"
+import { useGetTrips } from "../hooks/trips/useGetTrips"
+import { FaHotel } from "react-icons/fa"
+import { GiCash } from "react-icons/gi"
+import { IoEyeSharp } from "react-icons/io5"
 
 interface AccommodationProps {
-  id: string;
+  tripId?: string
 }
 
-interface Hotel {
-  name: string;
-  date: string;
-  website: string;
-  booked: boolean;
-  source: string;
+// Utility function to format price in VND
+const formatVND = (price: number | string | null): string => {
+  if (price == null) return "N/A"
+  const num = typeof price === "string" ? parseFloat(price) : price
+  if (isNaN(num)) return "N/A"
+  return num.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
 }
 
-const Accommodation: React.FC<AccommodationProps> = () => {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [link, setLink] = useState("");
-  const [error, setError] = useState("");
-  const [hotels, setHotels] = useState<Hotel[]>([
-    {
-      name: "Mayfair New York",
-      date: "Fri 11 Apr - Sat 12 Apr",
-      website:
-        "https://www.booking.com/hotel/us/mayfair-new-york.vi.html?aid=1787423&ucfs=1",
-      booked: false,
-      source: "Booking.com",
-    },
-  ]);
+// Utility function to format date and time
 
-  // List of supported travel websites
-  const supportedSites = [
-    { hostname: "booking.com", name: "Booking.com" },
-    { hostname: "hostelworld.com", name: "Hostelworld" },
-  ];
 
-  // Function to parse hotel name from URL
-  const parseHotelNameFromUrl = (url: string, source: string): string => {
-    try {
-      const urlObj = new URL(url);
-      const pathSegments = urlObj.pathname.split("/").filter((segment) => segment);
+export default function Accommodation({ tripId }: AccommodationProps) {
+  const navigate = useNavigate()
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [name, setName] = useState("")
+  const [location, setLocation] = useState("")
+  const [price, setPrice] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
+  const [error, setError] = useState("")
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([])
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isAdding, setIsAdding] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string, visible: boolean }>({
+    message: "",
+    visible: false,
+  })
+  const floatboxRef = useRef<HTMLDivElement>(null)
+  const isInitialLoadRef = useRef(true)
 
-      let hotelSlug = "";
-      if (source === "Booking.com") {
-        // Booking.com URLs: /hotel/{country}/{hotel-slug}.html
-        const hotelSegmentIndex = pathSegments.findIndex((seg) => seg === "hotel") + 2;
-        hotelSlug = pathSegments[hotelSegmentIndex]?.split(".")[0] || "";
-      } else if (source === "Airbnb") {
-        // Airbnb URLs: /rooms/{id} or /stays/{slug}
-        const roomSegment = pathSegments.find((seg) => seg.includes("rooms") || seg.includes("stays"));
-        hotelSlug = roomSegment
-          ? pathSegments[pathSegments.indexOf(roomSegment) + 1] || ""
-          : "";
-      } else if (source === "Expedia") {
-        // Expedia URLs: /hotels/{id}/{hotel-slug}
-        const hotelSegmentIndex = pathSegments.findIndex((seg) => seg === "hotels") + 2;
-        hotelSlug = pathSegments[hotelSegmentIndex]?.split("?")[0] || "";
-      } else if (source === "Agoda") {
-        // Agoda URLs: /hotel/{hotel-slug}.html
-        const hotelSegmentIndex = pathSegments.findIndex((seg) => seg === "hotel") + 1;
-        hotelSlug = pathSegments[hotelSegmentIndex]?.split(".")[0] || "";
-      } else if (source === "Hostelworld") {
-        // Hostelworld URLs: /pwa/hosteldetails.php/{hotel-slug}/{city}/{id}
-        const hostelSegmentIndex = pathSegments.findIndex((seg) => seg === "hosteldetails.php");
-        if (hostelSegmentIndex !== -1 && pathSegments[hostelSegmentIndex + 1]) {
-          hotelSlug = pathSegments[hostelSegmentIndex + 1] || "";
-        } else {
-          // Fallback for other Hostelworld URL patterns (e.g., /hostels/{city}/{hotel-slug})
-          const citySegmentIndex = pathSegments.findIndex((seg) => seg === "hostels") + 2;
-          hotelSlug = pathSegments[citySegmentIndex]?.split("?")[0] || "";
+  const { authUser } = useAuthContext()
+  const { getAccommodations, createAccommodation, deleteAccommodation } =
+    useAccommodation()
+  const { trips: userTrips } = useGetTrips()
+
+  const trip = tripId ? userTrips.find((trip) => trip.id === tripId) : null
+  console.log("Trip:", trip)
+
+  const showToast = useCallback((message: string) => {
+    setToast({ message, visible: true })
+    setTimeout(() => setToast({ message: "", visible: false }), 3000)
+  }, [])
+
+  useEffect(() => {
+    if (!tripId) {
+      setError("Trip ID is missing")
+      showToast("Trip ID is missing")
+      const timer = setTimeout(() => navigate("/trips"), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [tripId, navigate, showToast])
+
+  useEffect(() => {
+    if (!tripId || !isInitialLoadRef.current) return
+
+    let isMounted = true
+
+    const fetchAccommodations = async () => {
+      try {
+        setIsInitialLoading(true)
+        const response = await getAccommodations(tripId)
+        if (isMounted) {
+          setAccommodations(response.data || [])
+          setError("")
         }
-      } else if (source === "Tripadvisor") {
-        // Tripadvisor URLs: /Hotel_Review-{code}-{hotel-slug}
-        const hotelSegment = pathSegments.find((seg) => seg.startsWith("Hotel_Review"));
-        hotelSlug = hotelSegment?.split("-").slice(2).join("-") || "";
+      } catch (err) {
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to fetch accommodations"
+          )
+          showToast("Failed to fetch accommodations")
+        }
+      } finally {
+        if (isMounted) {
+          setIsInitialLoading(false)
+          isInitialLoadRef.current = false
+        }
       }
-
-      // Clean up the slug to make it human-readable
-      if (hotelSlug) {
-        return hotelSlug
-          .replace(/-/g, " ") // Replace hyphens with spaces
-          .replace(/_/g, " ") // Replace underscores with spaces
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(" ")
-          .trim();
-      }
-
-      return "Hotel"; // Fallback if no name is parsed
-    } catch {
-      return "Hotel"; // Fallback on error
     }
-  };
 
-  const handleAddLink = () => {
+    fetchAccommodations()
+
+    return () => {
+      isMounted = false
+    }
+  }, [tripId, showToast])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isPopupOpen &&
+        floatboxRef.current &&
+        !floatboxRef.current.contains(event.target as Node)
+      ) {
+        setIsPopupOpen(false)
+        setName("")
+        setLocation("")
+        setPrice(null)
+        setStartDate("")
+        setEndDate("")
+        setError("")
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isPopupOpen])
+
+  const parseBookingUrl = useCallback(
+    (url: string) => {
+      setError("")
+      if (!url) {
+        setName("")
+        setLocation("")
+        setPrice(null)
+        return
+      }
+
+      try {
+        const urlObj = new URL(url)
+        if (!urlObj.hostname.includes("booking.com")) {
+          setError("Please use a valid Booking.com URL")
+          showToast("Please use a valid Booking.com URL")
+          return
+        }
+
+        const pathParts = urlObj.pathname.split("/").filter(Boolean)
+        const hotelName =
+          pathParts[pathParts.length - 1]
+            ?.replace(/-/g, " ")
+            .replace(/\.html$/, "") || ""
+
+        const params = new URLSearchParams(urlObj.search)
+        const priceBlock = params.get("sr_pri_blocks")
+        let extractedPrice = null
+        if (priceBlock) {
+          const priceParts = priceBlock.split("_")
+          const priceValue = priceParts[priceParts.length - 1]
+          if (priceValue && !isNaN(Number(priceValue))) {
+            extractedPrice = (Number(priceValue) / 100).toFixed(0)
+          }
+        }
+
+        setName(hotelName)
+        setLocation(url)
+        setPrice(extractedPrice)
+      } catch {
+        setError("Invalid URL format")
+        showToast("Invalid URL format")
+        setName("")
+        setLocation("")
+        setPrice(null)
+      }
+    },
+    [showToast]
+  )
+
+  const handleAddAccommodation = useCallback(async () => {
+    if (!tripId) {
+      setError("Trip ID is missing")
+      showToast("Trip ID is missing")
+      return
+    }
+
+    if (!name || !location || !startDate || !endDate) {
+      setError("Name, URL, start date, and end date are required")
+      showToast("Name, URL, start date, and end date are required")
+      return
+    }
+
+    const parsedStartDate = new Date(startDate)
+    const parsedEndDate = new Date(endDate)
+    if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+      setError("Invalid start date or end date format")
+      showToast("Invalid start date or end date format")
+      return
+    }
+
+    if (parsedStartDate >= parsedEndDate) {
+      setError("Start date must be before end date")
+      showToast("Start date must be before end date")
+      return
+    }
+
+    if (price != null && (isNaN(Number(price)) || Number(price) < 0)) {
+      setError("Price must be a non-negative number")
+      showToast("Price must be a non-negative number")
+      return
+    }
+
     try {
-      const url = new URL(link);
-      const hostname = url.hostname.replace(/^www\./, "");
-      const site = supportedSites.find((s) => hostname.includes(s.hostname));
-
-      if (site) {
-        const hotelName = parseHotelNameFromUrl(link, site.name);
-        setHotels([
-          ...hotels,
-          {
-            name: hotelName,
-            date: "Fri 11 Apr - Sat 12 Apr",
-            website: link,
-            booked: false,
-            source: site.name,
-          },
-        ]);
-        setError("");
-        setIsPopupOpen(false);
-        setLink("");
-      } else {
-        setError("Please enter a link from a supported travel website (e.g., Booking.com, Airbnb, Expedia)");
+      setIsAdding(true)
+      setError("")
+      const newAccommodation = {
+        name,
+        location,
+        tripId,
+        price: price ? parseFloat(price) : null,
+        startDate: parsedStartDate.toISOString(),
+        endDate: parsedEndDate.toISOString(),
       }
-    } catch {
-      setError("Invalid URL format");
+
+      const response = await createAccommodation(newAccommodation)
+      setAccommodations((prev) => [...prev, response.data])
+      setIsPopupOpen(false)
+      setName("")
+      setLocation("")
+      setPrice(null)
+      setStartDate("")
+      setEndDate("")
+      setError("")
+      showToast("Accommodation added successfully!")
+    } catch (err) {
+      console.error("Error adding accommodation:", err)
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to add accommodation"
+      setError(errorMessage)
+      showToast(errorMessage)
+    } finally {
+      setIsAdding(false)
     }
-  };
+  }, [
+    tripId,
+    name,
+    location,
+    price,
+    startDate,
+    endDate,
+    createAccommodation,
+    showToast,
+  ])
 
-  const handleRemoveHotel = (index: number) => {
-    setHotels(hotels.filter((_, i) => i !== index));
-  };
+  const handleRemoveAccommodation = useCallback(
+    async (accommodationId: string) => {
+      try {
+        setIsDeleting(accommodationId)
+        setError("")
+        await deleteAccommodation(accommodationId)
+        setAccommodations((prev) =>
+          prev.filter((acc) => acc.id !== accommodationId)
+        )
+        showToast("Accommodation deleted successfully!")
+      } catch (err) {
+        console.error("Error deleting accommodation:", err)
+        setError("Failed to delete accommodation")
+        showToast("Failed to delete accommodation")
+      } finally {
+        setIsDeleting(null)
+      }
+    },
+    [deleteAccommodation, showToast]
+  )
 
-  const handleToggleBooked = (index: number) => {
-    const updatedHotels = [...hotels];
-    updatedHotels[index].booked = !updatedHotels[index].booked;
-    setHotels(updatedHotels);
-  };
+  const handleUrlChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newUrl = e.target.value
+      setLocation(newUrl)
+      parseBookingUrl(newUrl)
+    },
+    [parseBookingUrl]
+  )
+
+  if (!tripId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-red-500 text-lg">
+          Error: Trip ID is missing. Redirecting to trip selection...
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar bên trái */}
-      <div className="w-1/4 p-4 bg-gray-50 border-r">
-        <div className="flex items-center mb-4">
-          <button className="text-gray-600 mr-2">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 19l-7-7 7-7"
+    <div className="flex min-h-screen relative">
+      <div className="w-full p-4 bg-gray-100 flex flex-col">
+        {/* Header Section */}
+        <header className="mb-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <img
+                src={authUser?.avatarUrl || "/default-profile.png"}
+                alt="User avatar"
+                className="w-8 h-8 rounded-full"
               />
-            </svg>
-          </button>
-          <h1 className="text-lg font-semibold text-black">Back to plan</h1>
-        </div>
-        <h2 className="text-xl font-bold text-black">
-          1 nights in Hai Duong province
-        </h2>
-        <p className="text-sm text-black">Fri 11 Apr - Sat 12 Apr</p>
-        <button
-          onClick={() => setIsPopupOpen(true)}
-          className="mt-4 flex items-center px-3 py-2 bg-green-500 text-white rounded-full"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add custom
-        </button>
-
-        {/* Places to sleep */}
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-600 flex items-center">
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M3 9h18M3 9l9-7 9 7M3 9v10a2 2 0 002 2h14a2 2 0 002-2V9"
-              />
-            </svg>
-            Places to sleep
-          </h3>
-          <ul className="mt-2 space-y-2">
-            {supportedSites.map((site) => (
-              <li key={site.hostname} className="flex justify-between items-center">
-                <a
-                  href={`https://www.${site.hostname}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-black hover:underline"
-                >
-                  {site.name}
-                </a>
-                <span className="text-gray-500">
-                  {hotels.filter((hotel) => hotel.source === site.name).length}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* In your trip */}
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-600 flex items-center">
-            <svg
-              className="w-4 h-4 mr-2 text-green-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            In your trip
-          </h3>
-          <span className="text-gray-500 text-sm ml-6">{hotels.length}</span>
-        </div>
-      </div>
-
-      {/* Nội dung bên phải */}
-      <div className="w-3/4 p-4 bg-gray-100 flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center">
-            <span className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center mr-2">
-              V
-            </span>
-            <span className="text-black">vinh28212</span>
-            <span className="ml-2 px-2 py-1 bg-gray-200 text-black rounded-full text-sm">
-              Wishlist
-            </span>
-          </div>
-          <button className="text-black">View</button>
-        </div>
-
-        {/* Danh sách khách sạn */}
-        {hotels.map((hotel, index) => (
-          <div key={index} className="mt-4 bg-white p-4 rounded-lg shadow">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-black">{hotel.name}</h3>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleRemoveHotel(index)}
-                  className="px-3 py-1 bg-gray-200 text-black rounded-full"
-                >
-                  Remove
-                </button>
-                <a
-                  href={hotel.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1 bg-blue-600 text-white rounded-full flex items-center"
-                >
-                  View on {hotel.source}
-                </a>
-              </div>
+              <span className="text-black ml-2">
+                {authUser?.username || "Unknown User"}
+              </span>
             </div>
-            <p className="text-sm text-gray-600 mt-1">{hotel.date}</p>
-            <div className="flex items-center mt-2">
-              <span className="text-black mr-2">Booked</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hotel.booked}
-                  onChange={() => handleToggleBooked(index)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500">
-                  <div
-                    className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                      hotel.booked ? "translate-x-5" : "translate-x-1"
-                    } mt-0.5`}
-                  ></div>
-                </div>
-              </label>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Popup */}
-      {isPopupOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-black">
-                Add Accommodation Link
-              </h2>
-              <button
-                onClick={() => setIsPopupOpen(false)}
-                className="text-black"
+            <div className="flex items-center space-x-4">
+              <a
+                href="https://www.booking.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline text-sm"
               >
+                Booking.com
+              </a>
+              <h3 className="text-sm font-semibold text-gray-600 flex items-center">
                 <svg
-                  className="w-6 h-6"
+                  className="w-4 h-4 mr-2 text-green-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -317,42 +323,223 @@ const Accommodation: React.FC<AccommodationProps> = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M5 13l4 4L19 7"
                   />
                 </svg>
-              </button>
-            </div>
-            <input
-              type="text"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="Enter a travel website link (e.g., Booking.com, Airbnb)"
-              className="w-full p-2 border rounded mb-4 text-black"
-            />
-            {error && <p className="text-black mb-4">{error}</p>}
-            <div className="flex justify-end space-x-2">
+                In your trip
+                <span className="text-gray-500 text-sm ml-6">
+                  {accommodations.length}
+                </span>
+              </h3>
               <button
-                onClick={() => {
-                  setIsPopupOpen(false);
-                  setLink("");
-                  setError("");
-                }}
-                className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+                onClick={() => setIsPopupOpen(true)}
+                className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-green-600"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddLink}
-                className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-600"
-              >
-                Add
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add accommodation
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        </header>
 
-export default Accommodation;
+        {/* Main Content Section */}
+        <main>
+          {isInitialLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white p-4 rounded-lg shadow animate-pulse"
+                >
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {error && <p className="text-red-500 mb-4">{error}</p>}
+              {accommodations.length === 0 && !error && (
+                <p className="text-gray-600">
+                  No accommodations found. Add one to get started!
+                </p>
+              )}
+              {accommodations.map((acc) => (
+                <div
+                  key={acc.id}
+                  className="mt-4 bg-white p-4 rounded-lg shadow-md"
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-black flex flex-wrap items-center text-blue-600">
+                      <FaHotel className="mr-2" />
+                      <span>{acc.name}</span>
+                    </h3>
+                    <div className="flex space-x-2">
+                      <a
+                        href={acc.location}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 flex flex-wrap items-center"
+                      >
+                        <IoEyeSharp className="mr-1" />
+                        View
+                      </a>
+                      <button
+                        onClick={() => handleRemoveAccommodation(acc.id)}
+                        disabled={isDeleting === acc.id}
+                        className="px-3 py-1 bg-red-500 text-white rounded-full hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting === acc.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                  {acc.price != null && (
+                    <p className="text-sm text-yellow-600 mt-1 flex items-center flex-wrap">
+                      <GiCash className="mr-2" />
+                      {formatVND(acc.price)}
+                    </p>
+                  )}
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Start:</span>{" "}
+                    {new Date(acc.startDate).toLocaleString("vi-VN")}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-semibold">End:</span>{" "}
+                    {new Date(acc.endDate).toLocaleString("vi-VN")}
+                  </p>
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Popup for Adding Accommodation */}
+          {isPopupOpen && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <div
+                ref={floatboxRef}
+                className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-300"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-black">
+                    Add Accommodation
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setIsPopupOpen(false)
+                      setName("")
+                      setLocation("")
+                      setPrice(null)
+                      setStartDate("")
+                      setEndDate("")
+                      setError("")
+                    }}
+                    disabled={isAdding}
+                    className="text-black hover:text-gray-600 disabled:opacity-50"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={handleUrlChange}
+                  placeholder="Paste Booking.com URL"
+                  disabled={isAdding}
+                  className="w-full p-2 border rounded mb-4 text-black disabled:bg-gray-100"
+                />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Hotel name"
+                  disabled={isAdding}
+                  className="w-full p-2 border rounded mb-4 text-black disabled:bg-gray-100"
+                />
+                <input
+                  type="number"
+                  value={price || ""}
+                  onChange={(e) => setPrice(e.target.value || null)}
+                  placeholder="Price (optional)"
+                  disabled={isAdding}
+                  className="w-full p-2 border rounded mb-4 text-black disabled:bg-gray-100"
+                />
+                <input
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="Start date and time"
+                  disabled={isAdding}
+                  className="w-full p-2 border rounded mb-4 text-black disabled:bg-gray-100"
+                />
+                <input
+                  type="datetime-local"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="End date and time"
+                  disabled={isAdding}
+                  className="w-full p-2 border rounded mb-4 text-black disabled:bg-gray-100"
+                />
+                {error && <p className="text-red-500 mb-4">{error}</p>}
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setIsPopupOpen(false)
+                      setName("")
+                      setLocation("")
+                      setPrice(null)
+                      setStartDate("")
+                      setEndDate("")
+                      setError("")
+                    }}
+                    disabled={isAdding}
+                    className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddAccommodation}
+                    disabled={isAdding}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAdding ? "Adding..." : "Add"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Toast Notification */}
+          {toast.visible && (
+            <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
+              {toast.message}
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  )
+}

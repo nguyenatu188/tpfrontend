@@ -8,7 +8,9 @@ export const useGetTrips = () => {
   const fetchTrips = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/trip")
+      const res = await fetch("/api/trip", {
+        credentials: 'include',
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to fetch trips")
       setTrips(data)
