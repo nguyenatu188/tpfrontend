@@ -41,11 +41,13 @@ export default function Accommodation({ tripId }: AccommodationProps) {
   const isInitialLoadRef = useRef(true);
 
   const { authUser } = useAuthContext();
-  const { getAccommodations, createAccommodation, deleteAccommodation } = useAccommodation();
+  const { getAccommodations, createAccommodation, deleteAccommodation } =
+    useAccommodation();
   const { trips: userTrips } = useGetTrips();
 
   const trip = tripId ? userTrips.find((trip) => trip.id === tripId) : null;
-  const isProfileOwner = trip && authUser ? authUser.id === trip.owner.id : false;
+  const isProfileOwner =
+    trip && authUser ? authUser.id === trip.owner.id : false;
 
   const showToast = useCallback((message: string) => {
     setToast({ message, visible: true });
@@ -80,7 +82,11 @@ export default function Accommodation({ tripId }: AccommodationProps) {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to fetch accommodations");
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to fetch accommodations"
+          );
           showToast("Failed to fetch accommodations");
         }
       } finally {
@@ -139,7 +145,9 @@ export default function Accommodation({ tripId }: AccommodationProps) {
 
         const pathParts = urlObj.pathname.split("/").filter(Boolean);
         const hotelName =
-          pathParts[pathParts.length - 1]?.replace(/-/g, " ").replace(/\.html$/, "") || "";
+          pathParts[pathParts.length - 1]
+            ?.replace(/-/g, " ")
+            .replace(/\.html$/, "") || "";
 
         const params = new URLSearchParams(urlObj.search);
         const priceBlock = params.get("sr_pri_blocks");
@@ -224,13 +232,23 @@ export default function Accommodation({ tripId }: AccommodationProps) {
       showToast("Accommodation added successfully!");
     } catch (err) {
       console.error("Error adding accommodation:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to add accommodation";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to add accommodation";
       setError(errorMessage);
       showToast(errorMessage);
     } finally {
       setIsAdding(false);
     }
-  }, [tripId, name, location, price, startDate, endDate, createAccommodation, showToast]);
+  }, [
+    tripId,
+    name,
+    location,
+    price,
+    startDate,
+    endDate,
+    createAccommodation,
+    showToast,
+  ]);
 
   const handleRemoveAccommodation = useCallback(
     async (accommodationId: string) => {
@@ -238,7 +256,9 @@ export default function Accommodation({ tripId }: AccommodationProps) {
         setIsDeleting(accommodationId);
         setError("");
         await deleteAccommodation(accommodationId);
-        setAccommodations((prev) => prev.filter((acc) => acc.id !== accommodationId));
+        setAccommodations((prev) =>
+          prev.filter((acc) => acc.id !== accommodationId)
+        );
         showToast("Accommodation deleted successfully!");
       } catch (err) {
         console.error("Error deleting accommodation:", err);
