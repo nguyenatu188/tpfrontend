@@ -6,6 +6,8 @@ import { calculateDuration } from "../utils/calculateDate"
 import usePexelsImage from "../utils/usePexelsImage"
 import { useUpdatePrivacy } from "../hooks/trips/useUpdatePrivacy"
 import { Trip } from "../types/trip"
+import { FiEdit } from "react-icons/fi"
+import EditTripModal from "./EditTripModal"
 
 interface TripCardProps {
   trip: Trip
@@ -13,9 +15,10 @@ interface TripCardProps {
   onTripDeleted?: () => void
   viewOnly?: boolean
   onPrivacyUpdated?: () => void
+  onTripUpdated?: () => void
 }
 
-const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpdated }: TripCardProps) => {
+const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpdated, onTripUpdated }: TripCardProps) => {
   const imageUrl = usePexelsImage(trip.city)
   const { authUser } = useAuthContext()
   const isOwner = authUser?.id === trip.owner?.id
@@ -24,6 +27,8 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
   const { deleteTrip, isDeleting } = useDeleteTrip()
   const { updatePrivacy } = useUpdatePrivacy()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -56,7 +61,7 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
     } catch (err) {
       console.error("Failed to update visibility:", err)
     }
-  }  
+  }
 
   return (
     <div
@@ -84,12 +89,14 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
         )}
 
         {isOwner && !viewOnly && (
-          <div className="relative z-10">
+          <div 
+            className="relative z-10 w-10 h-10 flex items-center justify-center rounded-4xl hover:bg-gray-200"
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(!menuOpen)
+            }}
+          >
             <FiMoreVertical
-              onClick={(e) => {
-                e.stopPropagation()
-                setMenuOpen(!menuOpen)
-              }}
               className="text-gray-500 hover:text-black cursor-pointer size-6"
             />
             {menuOpen && (
@@ -99,7 +106,7 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
               >
                 {showDeleteConfirm ? (
                   <div className="flex flex-col space-y-2">
-                    <p className="text-red-500">Are you sure?</p>
+                    <p className="text-red-500 text-lg">Are you sure?</p>
                     <div className="flex space-x-2">
                       <button
                         onClick={confirmDelete}
@@ -110,7 +117,7 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
                       </button>
                       <button
                         onClick={cancelDelete}
-                        className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                        className="bg-gray-500 px-2 py-1 rounded hover:bg-gray-400"
                         disabled={isDeleting}
                       >
                         Cancel
@@ -118,32 +125,45 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
                     </div>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center text-red-500 hover:text-red-700"
-                  >
-                    <FiTrash className="mr-2" />
-                    Delete
-                  </button>
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        setIsEditModalOpen(true)
+                      }}
+                      className="flex items-center text-gray-600 text-lg hover:text-black"
+                    >
+                      <FiEdit className="mr-2" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex items-center text-red-500 text-lg hover:text-red-700"
+                    >
+                      <FiTrash className="mr-2" />
+                      Delete
+                    </button>
+                  </>
                 )}
-                <div className="flex items-center space-x-3 text-custom font-bold">
-                  <label className="flex items-center cursor-pointer">
+                <div className="flex items-center space-x-3 text-gray-500 font-bold">
+                  <label className="flex items-center cursor-pointer hover:text-black">
                     <input
                       type="radio"
                       name={`visibility-${trip.id}`}
                       checked={visibility === "PUBLIC"}
                       onChange={() => toggleVisibility("PUBLIC")}
                     />
-                    <FiGlobe className="ml-1 mr-1" /> Public
+                    <FiGlobe className="ml-1 mr-1 text-lg" /> Public
                   </label>
-                  <label className="flex items-center cursor-pointer text-custom font-bold">
+                  <label className="flex items-center cursor-pointer font-bold hover:text-black">
                     <input
                       type="radio"
                       name={`visibility-${trip.id}`}
                       checked={visibility === "PRIVATE"}
                       onChange={() => toggleVisibility("PRIVATE")}
                     />
-                    <FiLock className="ml-1 mr-1" /> Private
+                    <FiLock className="ml-1 mr-1 text-lg" /> Private
                   </label>
                 </div>
               </div>
@@ -197,6 +217,15 @@ const TripCard = ({ trip, onClick, onTripDeleted, viewOnly = false, onPrivacyUpd
           )}
         </div>
       </div>
+
+      <EditTripModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        trip={trip}
+        onSave={() => {
+          if (onTripUpdated) onTripUpdated()
+        }}
+      />
     </div>
   )
 }

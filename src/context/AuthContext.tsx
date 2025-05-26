@@ -7,6 +7,8 @@ type AuthUserType = {
   email: string
   gender: string
   avatarUrl: string
+  followersCount?: number
+  followingCount?: number
 }
 
 const AuthContext = createContext<{
@@ -48,7 +50,7 @@ export const AuthContextProvider = ({ children } : {children:ReactNode}) => {
     }
 
     fetchAuthUser()
-  }, [])
+  }, [authUser])
 
   return (
     <AuthContext.Provider

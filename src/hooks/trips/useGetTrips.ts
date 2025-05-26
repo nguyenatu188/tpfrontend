@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { Trip } from "../../types/trip"
 
-const useGetTrips = () => {
+export const useGetTrips = () => {
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -31,5 +31,3 @@ const useGetTrips = () => {
 
   return { trips, loading, refetch }
 }
-
-export default useGetTrips

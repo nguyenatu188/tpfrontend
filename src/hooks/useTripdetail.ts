@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Activity } from "../types/activities"
+import { Activity } from "../types/activitiy"
 
 const useGetActivitiesByTripId = (tripId: string) => {
   const [activities, setActivities] = useState<Activity[]>([])

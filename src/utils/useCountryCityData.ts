@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 // Loại Country có thêm code, để dễ dàng tra cứu trong GeoNames
 export type Country = {
@@ -62,7 +62,7 @@ export function useCountryCityData() {
   }, [])
 
   // Fetch danh sách thành phố sử dụng GeoNames API theo mã quốc gia
-  const fetchCities = async (countryNameOrCode: string) => {
+  const fetchCities = useCallback(async (countryNameOrCode: string) => {
     setLoadingCities(true)
     setCities([])
     setError(null)
@@ -105,7 +105,7 @@ export function useCountryCityData() {
     } finally {
       setLoadingCities(false)
     }
-  }
+  }, [])
 
   return {
     countries,

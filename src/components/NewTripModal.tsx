@@ -17,7 +17,6 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
   const [privacy, setPrivacy] = useState("")
   const [latlng, setLatlng] = useState<[number, number]>()
 
-
   const dialogRef = useRef<HTMLDialogElement | null>(null)
 
   const {
@@ -67,7 +66,6 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
         lat: latlng?.[0] ?? 0,
         lng: latlng?.[1] ?? 0,
       })
-
       
       // Call the onTripAdded callback if provided
       if (onTripAdded) {
@@ -191,7 +189,7 @@ function NewTripModal({ onClose, modalId, onTripAdded }: Props) {
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-soft btn-primary"
               disabled={isLoading}
             >
               {isLoading ? "Creating..." : "Create"}
