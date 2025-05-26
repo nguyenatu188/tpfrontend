@@ -1,16 +1,10 @@
 import { useCallback, useState } from "react"
-import { useAuthContext } from "../../context/AuthContext"
 
 export const useFollowUser = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { authUser } = useAuthContext()
 
   const follow = useCallback(async (userId: string) => {
-    if (!authUser) {
-      setError('Bạn cần đăng nhập để thực hiện thao tác này')
-      return false
-    }
 
     setLoading(true)
     setError(null)
@@ -34,7 +28,7 @@ export const useFollowUser = () => {
     } finally {
       setLoading(false)
     }
-  }, [authUser])
+  }, [])
 
   return { follow, loading, error }
 }

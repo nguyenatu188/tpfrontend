@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Routes,
   Route,
@@ -10,15 +10,19 @@ import SidebarTrip from "../components/SidebarTrip";
 // import Budget from "../components/Budget";
 import Packing from "../components/Packing";
 // import Collection from "../components/Collection";
-// import Discover from "../components/Discover";
-  import Accommodation from "../components/Accommodation";
-  import Transport from "../components/Transport";
-// import Activity from "../components/Activity";
+import Discover from "../components/Discover";
+import Accommodation from "../components/Accommodation";
+import Transport from "../components/Transport";
+import Activity from "../components/Activity";
+import { useGetTrips } from "../hooks/trips/useGetTrips";
+import { Trip } from "../types/trip";
 
 const TripDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const { trips } = useGetTrips();
+  const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
 
   useEffect(() => {
     console.log("Current location:", location.pathname); // Thêm log để kiểm tra URL
@@ -28,6 +32,13 @@ const TripDetail = () => {
       navigate(`/tripdetail/${id}/activity`, { replace: true });
     }
   }, [id, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (id && trips.length > 0) {
+      const trip = trips.find(t => t.id === id);
+      setCurrentTrip(trip || null);
+    }
+  }, [id, trips]);
 
   if (!id) {
     return <div className="p-6 text-red-500">Invalid Trip ID</div>;
@@ -40,11 +51,11 @@ const TripDetail = () => {
       </div>
       <div className="flex-1 ml-64">
         <Routes>
-          {/* <Route path="activity" element={<Activity tripId={tripId} />} />
-          <Route path="budget" element={<Budget tripId={tripId} />} /> */}
+          <Route path="activity" element={<Activity tripId={id} trip={currentTrip}/>} />
+          {/*<Route path="budget" element={<Budget tripId={id} />} /> */}
           <Route path="packing" element={<Packing tripId={id} />} />
-          {/* <Route path="collection" element={<Collection tripId={tripId} />} />  */}
-          {/* <Route path="discover" element={<Discover tripId={tripId} />} /> */}
+          {/* <Route path="collection" element={<Collection tripId={id} />} />  */}
+          <Route path="discover" element={<Discover tripId={id}/>} />
           <Route path="accommodation" element={<Accommodation tripId={id} />} />
           <Route path="transport" element={<Transport tripId={id} />} />
           <Route

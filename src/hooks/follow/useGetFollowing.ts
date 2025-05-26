@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
-import { useAuthContext } from "../../context/AuthContext"
+import { useState, useCallback } from "react"
 
 type Following = {
   id: string
@@ -13,13 +12,8 @@ export const useGetFollowing = () => {
   const [following, setFollowing] = useState<Following[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { authUser } = useAuthContext()
 
   const fetchFollowing = useCallback(async () => {
-    if (!authUser) {
-      setError('Bạn cần đăng nhập để xem danh sách')
-      return []
-    }
 
     setLoading(true)
     setError(null)
@@ -40,15 +34,11 @@ export const useGetFollowing = () => {
     } finally {
       setLoading(false)
     }
-  }, [authUser])
+  }, [])
 
   const refetch = useCallback(() => {
     return fetchFollowing()
   }, [fetchFollowing])
-
-  useEffect(() => {
-    if (authUser) fetchFollowing()
-  }, [authUser, fetchFollowing])
 
   return { following, loading, error, refetch }
 }

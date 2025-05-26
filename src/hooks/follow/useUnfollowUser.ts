@@ -1,16 +1,10 @@
 import { useCallback, useState } from "react"
-import { useAuthContext } from "../../context/AuthContext"
 
 export const useUnfollowUser = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { authUser } = useAuthContext()
 
   const unfollow = useCallback(async (userId: string) => {
-    if (!authUser) {
-      setError('Bạn cần đăng nhập để thực hiện thao tác này')
-      return false
-    }
 
     setLoading(true)
     setError(null)
@@ -34,7 +28,7 @@ export const useUnfollowUser = () => {
     } finally {
       setLoading(false)
     }
-  }, [authUser])
+  }, [])
 
   return { unfollow, loading, error }
 }

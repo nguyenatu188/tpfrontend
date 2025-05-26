@@ -51,7 +51,7 @@ export const AuthContextProvider = ({ children } : {children:ReactNode}) => {
     }
 
     fetchAuthUser()
-  }, [authUser])
+  }, [])
 
   return (
     <AuthContext.Provider
