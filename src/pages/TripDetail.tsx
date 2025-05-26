@@ -9,8 +9,8 @@ import {
 import SidebarTrip from "../components/SidebarTrip";
 // import Budget from "../components/Budget";
 import Packing from "../components/Packing";
-// import Collection from "../components/Collection";
-import Discover from "../components/Discover";
+import Collection from "../components/Collection";
+// import Discover from "../components/Discover";
   import Accommodation from "../components/Accommodation";
   import Transport from "../components/Transport";
 // import Activity from "../components/Activity";
@@ -43,8 +43,8 @@ const TripDetail = () => {
           {/* <Route path="activity" element={<Activity tripId={tripId} />} />
           <Route path="budget" element={<Budget tripId={tripId} />} /> */}
           <Route path="packing" element={<Packing tripId={id} />} />
-          {/* <Route path="collection" element={<Collection tripId={tripId} />} />  */}
-          <Route path="discover" element={<Discover tripId={id} />} />
+          <Route path="collection" element={<Collection tripId={id} />} /> 
+          {/* <Route path="discover" element={<Discover />} /> */}
           <Route path="accommodation" element={<Accommodation tripId={id} />} />
           <Route path="transport" element={<Transport tripId={id} />} />
           <Route

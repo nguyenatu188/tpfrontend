@@ -1,4 +1,5 @@
 import { NavLink, Link } from "react-router-dom"
+import { useAuthContext } from "../context/AuthContext"
 
 // Định nghĩa kiểu cho props của SidebarTrip
 interface SidebarTripProps {
@@ -6,12 +7,15 @@ interface SidebarTripProps {
 }
 
 const SidebarTrip: React.FC<SidebarTripProps> = ({ tripId }) => {
+  const { authUser } = useAuthContext()
   return (
     <div className="flex flex-col h-full p-4">
       {/* Logo */}
       <div className="mb-8">
       <Link to="/home">
-        <span className="text-2xl font-bold text-custom">Travel with us</span>
+        <span className="text-2xl font-bold text-custom">Travel with us 
+          <img src={authUser?.avatarUrl} alt="" />
+        </span>
       </Link>
     </div>
       {/* Các tab điều hướng */}

@@ -64,7 +64,7 @@ export const useTransport = (tripId?: string) => {
       const normalizedData = Array.isArray(data)
         ? data.map((transport: Transport) => ({
             ...transport,
-            price: transport.price ?? undefined,
+            price: transport.price, // Không cần xử lý null vì price luôn tồn tại
             startDate: new Date(transport.startDate),
             endDate: new Date(transport.endDate),
           }))
@@ -84,17 +84,22 @@ export const useTransport = (tripId?: string) => {
       type: string,
       from: string,
       to: string,
-      price?: number,
-      startDate?: string,
-      endDate?: string
+      price: number,
+      startDate: string,
+      endDate: string
     ): Promise<boolean> => {
       if (!tripId) {
         setError("Trip ID is required");
         return false;
       }
 
-      if (!type?.trim() || !from?.trim() || !to?.trim() || !startDate || !endDate) {
-        setError("Type, from, to, startDate, and endDate are required and cannot be empty");
+      if (!type?.trim() || !from?.trim() || !to?.trim() || price == null || !startDate || !endDate) {
+        setError("Type, from, to, price, startDate, and endDate are required and cannot be empty");
+        return false;
+      }
+
+      if (price < 0) {
+        setError("Price must be a non-negative number");
         return false;
       }
 
@@ -139,7 +144,7 @@ export const useTransport = (tripId?: string) => {
             type: type.trim(),
             from: from.trim(),
             to: to.trim(),
-            price: price != null ? Number(price) : null,
+            price,
             tripId,
             startDate: parsedStartDate.toISOString(),
             endDate: parsedEndDate.toISOString(),
@@ -156,7 +161,7 @@ export const useTransport = (tripId?: string) => {
           ...prev,
           {
             ...newTransport,
-            price: newTransport.price ?? undefined,
+            price: newTransport.price,
             startDate: new Date(newTransport.startDate),
             endDate: new Date(newTransport.endDate),
           },
@@ -180,17 +185,22 @@ export const useTransport = (tripId?: string) => {
       type: string,
       from: string,
       to: string,
-      price?: number,
-      startDate?: string,
-      endDate?: string
+      price: number,
+      startDate: string,
+      endDate: string
     ): Promise<boolean> => {
       if (!tripId) {
         setError("Trip ID is required");
         return false;
       }
 
-      if (!id?.trim() || !type?.trim() || !from?.trim() || !to?.trim() || !startDate || !endDate) {
-        setError("ID, type, from, to, startDate, and endDate are required and cannot be empty");
+      if (!id?.trim() || !type?.trim() || !from?.trim() || !to?.trim() || price == null || !startDate || !endDate) {
+        setError("ID, type, from, to, price, startDate, and endDate are required and cannot be empty");
+        return false;
+      }
+
+      if (price < 0) {
+        setError("Price must be a non-negative number");
         return false;
       }
 
@@ -235,7 +245,7 @@ export const useTransport = (tripId?: string) => {
             type: type.trim(),
             from: from.trim(),
             to: to.trim(),
-            price: price != null ? Number(price) : null,
+            price,
             tripId,
             startDate: parsedStartDate.toISOString(),
             endDate: parsedEndDate.toISOString(),
@@ -253,7 +263,7 @@ export const useTransport = (tripId?: string) => {
             transport.id === id
               ? {
                   ...updatedTransport,
-                  price: updatedTransport.price ?? undefined,
+                  price: updatedTransport.price,
                   startDate: new Date(updatedTransport.startDate),
                   endDate: new Date(updatedTransport.endDate),
                 }

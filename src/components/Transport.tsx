@@ -12,8 +12,7 @@ interface TransportProps {
 }
 
 // Hàm format giá tiền sang VND
-const formatVND = (price: number | null | undefined): string => {
-  if (price == null) return "N/A";
+const formatVND = (price: number): string => {
   return price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 };
 
@@ -83,8 +82,14 @@ const Transport = ({ tripId }: TransportProps) => {
       const startDate = (form.elements.namedItem("startDate") as HTMLInputElement).value;
       const endDate = (form.elements.namedItem("endDate") as HTMLInputElement).value;
 
-      if (!type.trim() || !from.trim() || !to.trim() || !startDate || !endDate) {
-        showToast("Type, from, to, startDate, and endDate are required");
+      if (!type.trim() || !from.trim() || !to.trim() || !price || !startDate || !endDate) {
+        showToast("Type, from, to, price, startDate, and endDate are required");
+        return;
+      }
+
+      const parsedPrice = parseFloat(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        showToast("Price must be a non-negative number");
         return;
       }
 
@@ -94,7 +99,7 @@ const Transport = ({ tripId }: TransportProps) => {
             type,
             from,
             to,
-            price ? parseFloat(price) : undefined,
+            parsedPrice,
             startDate,
             endDate
           )
@@ -102,7 +107,7 @@ const Transport = ({ tripId }: TransportProps) => {
             type,
             from,
             to,
-            price ? parseFloat(price) : undefined,
+            parsedPrice,
             startDate,
             endDate
           );
@@ -294,7 +299,7 @@ const Transport = ({ tripId }: TransportProps) => {
                       className="w-6 h-6"
                       fill="none"
                       stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      viewBox="0 24"
                     >
                       <path
                         strokeLinecap="round"
@@ -351,19 +356,20 @@ const Transport = ({ tripId }: TransportProps) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Price (optional)
+                      Price
                     </label>
                     <input
                       name="price"
                       defaultValue={
                         editingTransport?.price != null
                           ? editingTransport.price.toString()
-                          : ""
+                          : "0" // Giá trị mặc định là "0"
                       }
                       type="number"
                       step="0.01"
                       placeholder="Enter price"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required // Thêm thuộc tính required
                     />
                   </div>
                   <div>
@@ -379,6 +385,7 @@ const Transport = ({ tripId }: TransportProps) => {
                       }
                       type="datetime-local"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required
                     />
                   </div>
                   <div>
@@ -394,6 +401,7 @@ const Transport = ({ tripId }: TransportProps) => {
                       }
                       type="datetime-local"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required
                     />
                   </div>
                   <button
