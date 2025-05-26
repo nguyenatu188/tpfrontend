@@ -7,7 +7,7 @@ import {
   useParams,
 } from "react-router-dom";
 import SidebarTrip from "../components/SidebarTrip";
-// import Budget from "../components/Budget";
+import Budget from "../components/Budget";
 import Packing from "../components/Packing";
 import Collection from "../components/Collection";
 // import Discover from "../components/Discover";
@@ -40,8 +40,8 @@ const TripDetail = () => {
       </div>
       <div className="flex-1 ml-64">
         <Routes>
-          {/* <Route path="activity" element={<Activity tripId={tripId} />} />
-          <Route path="budget" element={<Budget tripId={tripId} />} /> */}
+          {/* {/* <Route path="activity" element={<Activity tripId={tripId} />} /> */}
+          <Route path="budget" element={<Budget tripId={id} />} /> 
           <Route path="packing" element={<Packing tripId={id} />} />
           <Route path="collection" element={<Collection tripId={id} />} /> 
           {/* <Route path="discover" element={<Discover />} /> */}

@@ -233,7 +233,7 @@ const Packing = ({ tripId }: PackingProps) => {
                   <span className="text-2xl"><FiPackage className="text-blue-500" /></span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-black">{category.name}</h3>
+                  <h3 className="font-semibold text-blue-600">{category.name}</h3>
                   <p className="text-gray-500">
                     {category.items.length}
                   </p>
