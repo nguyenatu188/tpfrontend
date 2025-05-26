@@ -31,5 +31,28 @@ export const useGetTrips = () => {
     fetchTrips()
   }, [fetchTrips])
 
-  return { trips, loading, refetch }
-}
+  const getTripsByCity = useCallback(async (city: string) => {
+    if (!city) return [];
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/trip/city?city=${encodeURIComponent(city)}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to fetch trips by city");
+      const filteredTrips = data.filter((trip: Trip) => trip.id !== trips.find((t) => t.id === trip.id)?.id);
+      return filteredTrips;
+    } catch (err) {
+      console.error("Error fetching trips by city:", err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [trips]);
+
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
+
+  return { trips, loading, refetch, getTripsByCity };
+};

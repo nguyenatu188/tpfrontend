@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTransport } from "../hooks/useTransport";
+import { Transport as TransportType } from "../types/transport";
 import { useAuthContext } from "../context/AuthContext";
+import { useGetTrips } from "../hooks/trips/useGetTrips";
 import { FiMapPin } from "react-icons/fi";
 import { GiCash } from "react-icons/gi";
 import { FaPlane, FaTrain, FaBus, FaCar, FaShip, FaBicycle, FaMotorcycle } from "react-icons/fa";
 
-// Định nghĩa interface cho TransportProps
 interface TransportProps {
   tripId: string;
 }
 
 // Hàm format giá tiền sang VND
-const formatVND = (price: number | null | undefined): string => {
-  if (price == null) return "N/A";
+const formatVND = (price: number): string => {
   return price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 };
 
@@ -27,23 +27,29 @@ const transportIcons: { [key: string]: React.ReactElement } = {
   Motorcycle: <FaMotorcycle className="mr-2 text-gray-600" />,
 };
 
-const Transport: React.FC<TransportProps> = ({ tripId }) => {
+const Transport = ({ tripId }: TransportProps) => {
   const {
     transports,
     loading,
     error,
     fetchTransports,
     createTransport,
+    updateTransport,
     deleteTransport,
   } = useTransport(tripId);
   const { authUser } = useAuthContext();
+  const { trips: userTrips } = useGetTrips();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [editingTransport, setEditingTransport] = useState<TransportType | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({
     message: "",
     visible: false,
   });
   const popupRef = useRef<HTMLDivElement>(null);
   const isInitialLoadRef = useRef(true);
+
+  const trip = userTrips.find((trip) => trip.id === tripId) || null;
+  const isProfileOwner = trip && authUser ? authUser.id === trip.owner.id : false;
 
   const predefinedTypes = [
     "Flight",
@@ -62,6 +68,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
 
   const togglePopup = useCallback(() => {
     setIsPopupOpen((prev) => !prev);
+    setEditingTransport(null);
   }, []);
 
   const handleAddTransport = useCallback(
@@ -75,22 +82,42 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
       const startDate = (form.elements.namedItem("startDate") as HTMLInputElement).value;
       const endDate = (form.elements.namedItem("endDate") as HTMLInputElement).value;
 
-      if (!type.trim() || !from.trim() || !to.trim() || !startDate || !endDate) {
-        showToast("Type, from, to, startDate, and endDate are required");
+      if (!type.trim() || !from.trim() || !to.trim() || !price || !startDate || !endDate) {
+        showToast("Type, from, to, price, startDate, and endDate are required");
         return;
       }
 
-      const success = await createTransport(
-        type,
-        from,
-        to,
-        price ? parseFloat(price) : undefined,
-        startDate,
-        endDate
-      );
+      const parsedPrice = parseFloat(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        showToast("Price must be a non-negative number");
+        return;
+      }
+
+      const success = editingTransport
+        ? await updateTransport(
+            editingTransport.id,
+            type,
+            from,
+            to,
+            parsedPrice,
+            startDate,
+            endDate
+          )
+        : await createTransport(
+            type,
+            from,
+            to,
+            parsedPrice,
+            startDate,
+            endDate
+          );
 
       if (success) {
-        showToast("Transport added successfully!");
+        showToast(
+          editingTransport
+            ? "Transport updated successfully!"
+            : "Transport added successfully!"
+        );
         form.reset();
         togglePopup();
         await fetchTransports();
@@ -98,7 +125,14 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
         showToast("Failed to save transport");
       }
     },
-    [createTransport, showToast, togglePopup, fetchTransports]
+    [
+      createTransport,
+      updateTransport,
+      editingTransport,
+      showToast,
+      togglePopup,
+      fetchTransports,
+    ]
   );
 
   const handleDeleteTransport = useCallback(
@@ -113,6 +147,11 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
     },
     [deleteTransport, showToast, fetchTransports]
   );
+
+  const handleEditTransport = useCallback((transport: TransportType) => {
+    setEditingTransport(transport);
+    setIsPopupOpen(true);
+  }, []);
 
   useEffect(() => {
     if (isInitialLoadRef.current) {
@@ -129,6 +168,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
         !popupRef.current.contains(event.target as Node)
       ) {
         setIsPopupOpen(false);
+        setEditingTransport(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -152,25 +192,27 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={togglePopup}
-                className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {isProfileOwner && (
+                <button
+                  onClick={togglePopup}
+                  className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add transport
-              </button>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add transport
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -216,29 +258,39 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                         {new Date(transport.endDate).toLocaleString("vi-VN")}
                       </p>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleDeleteTransport(transport.id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    {isProfileOwner && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditTransport(transport)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTransport(transport.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* Popup for Adding Transport */}
-          {isPopupOpen && (
-            <div className="absolute inset-0 flex items-center justify-center z-50">
+          {/* Popup for Adding/Editing Transport */}
+          {isPopupOpen && isProfileOwner && (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
               <div
                 ref={popupRef}
                 className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-300"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-black">Add Transport</h2>
+                  <h2 className="text-xl font-bold text-black">
+                    {editingTransport ? "Edit Transport" : "Add Transport"}
+                  </h2>
                   <button
                     onClick={togglePopup}
                     className="text-black hover:text-gray-600"
@@ -247,7 +299,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                       className="w-6 h-6"
                       fill="none"
                       stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      viewBox="0 24"
                     >
                       <path
                         strokeLinecap="round"
@@ -265,6 +317,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                     </label>
                     <select
                       name="type"
+                      defaultValue={editingTransport?.type || ""}
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
                     >
                       <option value="" disabled>
@@ -283,6 +336,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                     </label>
                     <input
                       name="from"
+                      defaultValue={editingTransport?.from || ""}
                       type="text"
                       placeholder="Enter departure"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
@@ -294,6 +348,7 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                     </label>
                     <input
                       name="to"
+                      defaultValue={editingTransport?.to || ""}
                       type="text"
                       placeholder="Enter destination"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
@@ -301,14 +356,20 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Price (optional)
+                      Price
                     </label>
                     <input
                       name="price"
+                      defaultValue={
+                        editingTransport?.price != null
+                          ? editingTransport.price.toString()
+                          : "0" // Giá trị mặc định là "0"
+                      }
                       type="number"
                       step="0.01"
                       placeholder="Enter price"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required // Thêm thuộc tính required
                     />
                   </div>
                   <div>
@@ -317,8 +378,14 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                     </label>
                     <input
                       name="startDate"
+                      defaultValue={
+                        editingTransport?.startDate
+                          ? new Date(editingTransport.startDate).toISOString().slice(0, 16)
+                          : ""
+                      }
                       type="datetime-local"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required
                     />
                   </div>
                   <div>
@@ -327,15 +394,21 @@ const Transport: React.FC<TransportProps> = ({ tripId }) => {
                     </label>
                     <input
                       name="endDate"
+                      defaultValue={
+                        editingTransport?.endDate
+                          ? new Date(editingTransport.endDate).toISOString().slice(0, 16)
+                          : ""
+                      }
                       type="datetime-local"
                       className="mt-1 block w-full p-2 border rounded-lg text-black"
+                      required
                     />
                   </div>
                   <button
                     type="submit"
                     className="w-full px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600"
                   >
-                    Add Transport
+                    {editingTransport ? "Update Transport" : "Add Transport"}
                   </button>
                 </form>
               </div>

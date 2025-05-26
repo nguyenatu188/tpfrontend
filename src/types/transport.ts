@@ -3,8 +3,8 @@ export interface Transport {
   type: string;
   from: string;
   to: string;
-  price?: number | null;
+  price: number; // Bắt buộc, không cho phép null
   tripId: string;
-  startDate: Date | string; // Có thể nhận string từ API và parse thành Date
-  endDate: Date | string;   // Có thể nhận string từ API và parse thành Date
+  startDate: Date | string;
+  endDate: Date | string;
 }

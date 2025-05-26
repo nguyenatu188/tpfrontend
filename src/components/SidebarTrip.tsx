@@ -11,7 +11,8 @@ const SidebarTrip: React.FC<SidebarTripProps> = ({ tripId }) => {
       {/* Logo */}
       <div className="mb-8">
       <Link to="/home">
-        <span className="text-2xl font-bold text-custom">Travel with us</span>
+        <span className="text-2xl font-bold text-custom">Travel with us 
+        </span>
       </Link>
     </div>
       {/* Các tab điều hướng */}

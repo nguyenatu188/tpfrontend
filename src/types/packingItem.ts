@@ -1,5 +1,15 @@
 export type PackingItem = {
-  id?: string;
+  id: string;
   name: string;
-  packed: boolean;
+  quantity: number;
+  tripId: string;
+  trip: {
+    id: string;
+    title: string;
+  };
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+  };
 };

@@ -1,331 +1,393 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import usePackingCategory from "../hooks/usePackingCategory";
+import usePackingItem from "../hooks/usePackingItem";
+import { PackingCategory } from "../types/packingCategory";
+import { useAuthContext } from "../context/AuthContext";
+import { useGetTrips } from "../hooks/trips/useGetTrips";
+import { FiPackage } from "react-icons/fi";
 
 interface PackingProps {
-  tripId: string;
+  tripId?: string;
 }
 
-interface PackingItem {
-  name: string;
-  packed: boolean;
+interface Toast {
+  message: string;
+  type: "success" | "error";
 }
 
-interface Category {
-  name: string;
-  items: PackingItem[];
-}
+const Packing = ({ tripId }: PackingProps) => {
+  const {
+    categories,
+    addPackingCategory,
+    deletePackingCategory,
+    getCategoriesByTripId,
+    isLoading: categoryLoading,
+    error: categoryError,
+  } = usePackingCategory();
+  const {
+    addPackingItem,
+    deletePackingItem,
+    isLoading: itemLoading,
+    error: itemError,
+  } = usePackingItem();
+  const { authUser } = useAuthContext();
+  const { trips: userTrips } = useGetTrips();
 
-const Packing: React.FC<PackingProps> = ({ tripId }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({
-    message: "",
-    visible: false,
-  });
-  const popupRef = useRef<HTMLDivElement>(null);
+  const [isCategoryFloatboxOpen, setIsCategoryFloatboxOpen] = useState(false);
+  const [isItemsFloatboxOpen, setIsItemsFloatboxOpen] = useState(false);
+  const [isConfirmFloatboxOpen, setIsConfirmFloatboxOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState<"item" | "category" | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<PackingCategory | null>(null);
+  const [categoryName, setCategoryName] = useState("");
+  const [itemName, setItemName] = useState("");
+  const [itemQuantity, setItemQuantity] = useState(1);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const categoryFloatboxRef = useRef<HTMLDivElement>(null);
+  const itemsFloatboxRef = useRef<HTMLDivElement>(null);
+  const confirmFloatboxRef = useRef<HTMLDivElement>(null);
 
-  const predefinedCategories = [
-    "Baby",
-    "Beach",
-    "Business",
-    "Camping",
-    "Clothing",
-    "Cycling",
-    "Electronics",
-    "Essentials",
-    "Fancy dinner",
-    "Food",
-    "Gym",
-    "Hiking",
-    "Kitesurfing",
-    "Make-up",
-    "Motorcycling",
-    "Music Festival",
-  ];
-console.log("Packing component rendered with tripId:", tripId);
-  const showToast = useCallback((message: string) => {
-    setToast({ message, visible: true });
-    setTimeout(() => setToast({ message: "", visible: false }), 3000);
-  }, []);
+  const trip = tripId ? userTrips.find((trip) => trip.id === tripId) : null;
+  const isProfileOwner = trip && authUser ? authUser.id === trip.owner.id : false;
 
-  const handleCategorySelect = useCallback((categoryName: string) => {
-    if (!categories.some((cat) => cat.name === categoryName)) {
-      setCategories((prev) => [...prev, { name: categoryName, items: [] }]);
-      showToast(`Category "${categoryName}" added successfully!`);
-      setIsPopupOpen(false);
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [categories, showToast]);
-
-  const togglePopup = useCallback(() => {
-    setIsPopupOpen((prev) => !prev);
-  }, []);
-
-  const addItemToCategory = useCallback(
-    (categoryName: string, itemName: string) => {
-      if (!itemName.trim()) return;
-      setCategories((prevCategories) =>
-        prevCategories.map((cat) =>
-          cat.name === categoryName
-            ? { ...cat, items: [...cat.items, { name: itemName, packed: false }] }
-            : cat
-        )
-      );
-      showToast(`Item "${itemName}" added to "${categoryName}"!`);
-    },
-    [showToast]
-  );
-
-  const toggleItemPacked = useCallback((categoryName: string, itemIndex: number) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.name === categoryName
-          ? {
-              ...cat,
-              items: cat.items.map((item, idx) =>
-                idx === itemIndex ? { ...item, packed: !item.packed } : item
-              ),
-            }
-          : cat
-      )
-    );
-  }, []);
-
-  const deleteCategory = useCallback((categoryName: string) => {
-    setCategories((prevCategories) =>
-      prevCategories.filter((cat) => cat.name !== categoryName)
-    );
-  }, []);
-
-  const deleteItem = useCallback((categoryName: string, itemIndex: number) => {
-    setCategories((prevCategories) =>
-      prevCategories.map((cat) =>
-        cat.name === categoryName
-          ? { ...cat, items: cat.items.filter((_, idx) => idx !== itemIndex) }
-          : cat
-      )
-    );
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0);
-    const packedItems = categories.reduce(
-      (sum, cat) => sum + cat.items.filter((item) => item.packed).length,
-      0
-    );
-    const newProgress = totalItems === 0 ? 0 : (packedItems / totalItems) * 100;
-    setProgress(newProgress);
-  }, [categories]);
+    if (tripId) {
+      getCategoriesByTripId(tripId).catch((err) => {
+        console.error("Error fetching categories:", err);
+        setToast({ message: "Unable to load categories", type: "error" });
+      });
+    }
+  }, [tripId, getCategoriesByTripId]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    if (itemError || categoryError) {
+      setToast({ message: itemError || categoryError || "Unknown error", type: "error" });
+    }
+  }, [itemError, categoryError]);
+
+  useEffect(() => {
+    const handleClickOutside = async (event: MouseEvent) => {
       if (
-        isPopupOpen &&
-        popupRef.current &&
-        !popupRef.current.contains(event.target as Node)
+        isCategoryFloatboxOpen &&
+        categoryFloatboxRef.current &&
+        !categoryFloatboxRef.current.contains(event.target as Node)
       ) {
-        setIsPopupOpen(false);
+        setIsCategoryFloatboxOpen(false);
+        setCategoryName("");
+        if (tripId) await getCategoriesByTripId(tripId);
+      }
+      if (
+        isItemsFloatboxOpen &&
+        itemsFloatboxRef.current &&
+        !itemsFloatboxRef.current.contains(event.target as Node)
+      ) {
+        setIsItemsFloatboxOpen(false);
+        setItemName("");
+        setItemQuantity(1);
+        if (tripId) await getCategoriesByTripId(tripId);
+      }
+      if (
+        isConfirmFloatboxOpen &&
+        confirmFloatboxRef.current &&
+        !confirmFloatboxRef.current.contains(event.target as Node)
+      ) {
+        setIsConfirmFloatboxOpen(false);
+        setConfirmType(null);
+        setConfirmId(null);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isPopupOpen]);
+  }, [isCategoryFloatboxOpen, isItemsFloatboxOpen, isConfirmFloatboxOpen, tripId, getCategoriesByTripId]);
+
+  const handleAddCategory = async () => {
+    if (categoryName.trim() && tripId) {
+      const result = await addPackingCategory(categoryName, tripId);
+      if (result) {
+        setCategoryName("");
+        setIsCategoryFloatboxOpen(false);
+        setToast({ message: "Category added successfully", type: "success" });
+        await getCategoriesByTripId(tripId);
+      } else {
+        setToast({ message: "Unable to add category", type: "error" });
+      }
+    }
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    setConfirmType("category");
+    setConfirmId(categoryId);
+    setIsConfirmFloatboxOpen(true);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setConfirmType("item");
+    setConfirmId(itemId);
+    setIsConfirmFloatboxOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (tripId && confirmId && confirmType) {
+      if (confirmType === "item" && selectedCategory) {
+        const success = await deletePackingItem(confirmId);
+        if (success) {
+          await getCategoriesByTripId(tripId);
+          const updatedCategory = categories.find((cat: PackingCategory) => cat.id === selectedCategory.id);
+          if (updatedCategory) setSelectedCategory(updatedCategory);
+          setToast({ message: "Item deleted successfully", type: "success" });
+        } else {
+          setToast({ message: "Unable to delete item", type: "error" });
+        }
+      } else if (confirmType === "category") {
+        const success = await deletePackingCategory(confirmId);
+        if (success) {
+          await getCategoriesByTripId(tripId);
+          if (selectedCategory?.id === confirmId) {
+            setSelectedCategory(null);
+            setIsItemsFloatboxOpen(false);
+          }
+          setToast({ message: "Category deleted successfully", type: "success" });
+        } else {
+          setToast({ message: "Unable to delete category", type: "error" });
+        }
+      }
+      setIsConfirmFloatboxOpen(false);
+      setConfirmType(null);
+      setConfirmId(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmFloatboxOpen(false);
+    setConfirmType(null);
+    setConfirmId(null);
+  };
+
+  const handleCategoryClick = async (category: PackingCategory) => {
+    setSelectedCategory(category);
+    setIsItemsFloatboxOpen(true);
+    if (tripId) await getCategoriesByTripId(tripId);
+  };
+
+  const handleCloseCategoryFloatbox = async () => {
+    setIsCategoryFloatboxOpen(false);
+    setCategoryName("");
+    if (tripId) await getCategoriesByTripId(tripId);
+  };
+
+  const handleCloseItemsFloatbox = async () => {
+    setIsItemsFloatboxOpen(false);
+    setItemName("");
+    setItemQuantity(1);
+    if (tripId) await getCategoriesByTripId(tripId);
+  };
+
+  const handleAddItem = async () => {
+    if (itemName.trim() && selectedCategory && tripId) {
+      const result = await addPackingItem(itemName, itemQuantity, tripId, selectedCategory.id);
+      if (result) {
+        setItemName("");
+        setItemQuantity(1);
+        setIsItemsFloatboxOpen(false);
+        setToast({ message: "Item added successfully", type: "success" });
+        await getCategoriesByTripId(tripId);
+      } else {
+        setToast({ message: "Unable to add item", type: "error" });
+      }
+    }
+  };
 
   return (
-    <div className="flex min-h-screen relative">
-      <div className="w-full p-4 bg-gray-100 flex flex-col">
-        {/* Header Section */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center">
-            <img
-              src="/default-profile.png"
-              alt="User avatar"
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="text-black ml-2">Unknown User</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <a
-              href="https://www.booking.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline text-sm"
+    <div className="p-4 bg-white text-black min-h-screen relative">
+      <h2 className="text-xl font-bold">Packing List</h2>
+      <div className="flex justify-between items-center mt-2">
+        {isProfileOwner && (
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={() => setIsCategoryFloatboxOpen(true)}
+            disabled={categoryLoading || itemLoading}
+          >
+            Add Category
+          </button>
+        )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        {categories.length > 0 ? (
+          categories.map((category: PackingCategory) => (
+            <div
+              key={category.id}
+              className="border border-gray-300 rounded-lg p-4 flex items-center justify-between bg-white cursor-pointer hover:bg-gray-100"
+              onClick={() => handleCategoryClick(category)}
             >
-              Booking.com
-            </a>
-            <h3 className="text-sm font-semibold text-gray-600 flex items-center">
-              <svg
-                className="w-4 h-4 mr-2 text-green-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              In your packing list
-              <span className="text-gray-500 text-sm ml-2">
-                {categories.reduce((sum, cat) => sum + cat.items.length, 0)}
-              </span>
-            </h3>
+              <div className="flex items-center">
+                <div className="mr-4">
+                  <span className="text-2xl"><FiPackage className="text-blue-500" /></span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-blue-600">{category.name}</h3>
+                  <p className="text-gray-500">
+                    {category.items.length}
+                  </p>
+                </div>
+              </div>
+              {isProfileOwner && (
+                <button
+                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCategory(category.id);
+                  }}
+                  disabled={categoryLoading || itemLoading}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500">User has no items</p>
+        )}
+      </div>
+
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white ${
+            toast.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
+      {isCategoryFloatboxOpen && isProfileOwner && (
+        <div
+          ref={categoryFloatboxRef}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl text-black max-w-sm w-full z-50"
+        >
+          <h3 className="text-lg font-semibold mb-4">Add New Category</h3>
+          <input
+            type="text"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            placeholder="Category Name"
+            className="border border-gray-300 p-2 rounded w-full mb-4 bg-white text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex justify-end gap-2">
             <button
-              onClick={togglePopup}
-              className="flex items-center px-3 py-2 bg-green-500 text-white rounded-full hover:bg-green-600"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+              onClick={handleAddCategory}
+              disabled={categoryLoading}
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Add list
+              Create Category
+            </button>
+            <button
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
+              onClick={handleCloseCategoryFloatbox}
+            >
+              Close
             </button>
           </div>
         </div>
+      )}
 
-        {/* Progress Section */}
-        <div className="mt-4">
-          <p className="text-black">{Math.round(progress)}% packed</p>
-          <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-2 bg-blue-500 rounded-full"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        </div>
-
-        {/* Categories and Items Section */}
-        <div className="mt-6">
-          {categories.length === 0 ? (
-            <p className="text-gray-600">No categories added yet. Add one to get started!</p>
-          ) : (
-            categories.map((category, index) => (
-              <div key={index} className="mt-4 bg-white p-4 rounded-lg shadow">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-black">{category.name}</h2>
-                  <button
-                    onClick={() => deleteCategory(category.name)}
-                    className="px-3 py-1 bg-gray-200 text-black rounded-full hover:bg-gray-300"
-                  >
-                    Delete
-                  </button>
-                </div>
-                {category.items.length === 0 ? (
-                  <p className="text-gray-600 mt-2">No items added yet.</p>
-                ) : (
-                  <ul className="mt-2 space-y-2">
-                    {category.items.map((item, itemIndex) => (
-                      <li
-                        key={itemIndex}
-                        className="flex items-center justify-between"
+      {isItemsFloatboxOpen && selectedCategory && (
+        <div
+          ref={itemsFloatboxRef}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl text-black max-w-md w-full z-50"
+        >
+          <h3 className="text-lg font-semibold mb-4">Items in {selectedCategory.name}</h3>
+          <div className="mb-4 max-h-60 overflow-y-auto">
+            {selectedCategory.items.length > 0 ? (
+              <ul className="space-y-2">
+                {selectedCategory.items.map((item: { id: string; name: string; quantity: number }) => (
+                  <li key={item.id} className="border-b pb-2 flex justify-between items-center text-gray-700">
+                    <span>{item.name} (Quantity: {item.quantity})</span>
+                    {isProfileOwner && (
+                      <button
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
+                        onClick={() => handleDeleteItem(item.id)}
+                        disabled={itemLoading}
                       >
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={item.packed}
-                            onChange={() => toggleItemPacked(category.name, itemIndex)}
-                            className="mr-2"
-                          />
-                          <span
-                            className={`text-black ${item.packed ? "line-through" : ""}`}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => deleteItem(category.name, itemIndex)}
-                          className="px-3 py-1 bg-gray-200 text-black rounded-full hover:bg-gray-300"
-                        >
-                          Delete
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-4 flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Add item..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const input = e.target as HTMLInputElement;
-                        addItemToCategory(category.name, input.value);
-                        input.value = "";
-                      }
-                    }}
-                    className="flex-1 p-2 border rounded-lg text-black"
-                  />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Popup for Category Selection */}
-        {isPopupOpen && (
-          <div className="absolute inset-0 flex items-center justify-center z-50">
-            <div
-              ref={popupRef}
-              className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-300"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-black">Select category</h2>
+                        Delete
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No items in this category.</p>
+            )}
+          </div>
+          {isProfileOwner && (
+            <div>
+              <input
+                type="text"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                placeholder="Item Name"
+                className="border border-gray-300 p-2 rounded w-full mb-4 bg-white text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <input
+                type="number"
+                value={itemQuantity}
+                onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                min="1"
+                className="border border-gray-300 p-2 rounded w-full mb-4 bg-white text-black focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <div className="flex justify-end gap-2">
                 <button
-                  onClick={togglePopup}
-                  className="text-black hover:text-gray-600"
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+                  onClick={handleAddItem}
+                  disabled={itemLoading}
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  Add Item
+                </button>
+                <button
+                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
+                  onClick={handleCloseItemsFloatbox}
+                >
+                  Close
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                {predefinedCategories.map((category, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleCategorySelect(category)}
-                    className="flex items-center justify-between p-2 bg-white border rounded-lg hover:bg-gray-100 text-black"
-                  >
-                    <span>{category}</span>
-                    <span className="text-blue-500">select</span>
-                  </button>
-                ))}
-              </div>
-              <button className="mt-4 flex items-center text-blue-500 hover:text-blue-600">
-                <span className="mr-1">➕</span> Create custom list
-              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* Toast Notification */}
-        {toast.visible && (
-          <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out">
-            {toast.message}
+      {isConfirmFloatboxOpen && isProfileOwner && confirmType && (
+        <div
+          ref={confirmFloatboxRef}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl text-black max-w-sm w-full z-50"
+        >
+          <h3 className="text-lg font-semibold mb-4">
+            Are you sure you want to delete this {confirmType === "item" ? "item" : "category"}?
+          </h3>
+          <div className="flex justify-end gap-2">
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+              onClick={handleConfirmDelete}
+              disabled={categoryLoading || itemLoading}
+            >
+              Confirm
+            </button>
+            <button
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
+              onClick={handleCancelDelete}
+            >
+              Cancel
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
