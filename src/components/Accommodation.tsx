@@ -20,9 +20,6 @@ const formatVND = (price: number | string | null): string => {
   return num.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
 }
 
-// Utility function to format date and time
-
-
 export default function Accommodation({ tripId }: AccommodationProps) {
   const navigate = useNavigate()
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -44,12 +41,11 @@ export default function Accommodation({ tripId }: AccommodationProps) {
   const isInitialLoadRef = useRef(true)
 
   const { authUser } = useAuthContext()
-  const { getAccommodations, createAccommodation, deleteAccommodation } =
-    useAccommodation()
+  const { getAccommodations, createAccommodation, deleteAccommodation } = useAccommodation()
   const { trips: userTrips } = useGetTrips()
 
   const trip = tripId ? userTrips.find((trip) => trip.id === tripId) : null
-  console.log("Trip:", trip)
+  const isProfileOwner = trip && authUser ? authUser.id === trip.owner.id : false
 
   const showToast = useCallback((message: string) => {
     setToast({ message, visible: true })
@@ -331,25 +327,27 @@ export default function Accommodation({ tripId }: AccommodationProps) {
                   {accommodations.length}
                 </span>
               </h3>
-              <button
-                onClick={() => setIsPopupOpen(true)}
-                className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-green-600"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {isProfileOwner && (
+                <button
+                  onClick={() => setIsPopupOpen(true)}
+                  className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-full hover:bg-green-600"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add accommodation
-              </button>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add accommodation
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -396,13 +394,15 @@ export default function Accommodation({ tripId }: AccommodationProps) {
                         <IoEyeSharp className="mr-1" />
                         View
                       </a>
-                      <button
-                        onClick={() => handleRemoveAccommodation(acc.id)}
-                        disabled={isDeleting === acc.id}
-                        className="px-3 py-1 bg-red-500 text-white rounded-full hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isDeleting === acc.id ? "Deleting..." : "Delete"}
-                      </button>
+                      {isProfileOwner && (
+                        <button
+                          onClick={() => handleRemoveAccommodation(acc.id)}
+                          disabled={isDeleting === acc.id}
+                          className="px-3 py-1 bg-red-500 text-white rounded-full hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isDeleting === acc.id ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {acc.price != null && (
@@ -425,8 +425,8 @@ export default function Accommodation({ tripId }: AccommodationProps) {
           )}
 
           {/* Popup for Adding Accommodation */}
-          {isPopupOpen && (
-            <div className="absolute inset-0 flex items-center justify-center z-50">
+          {isPopupOpen && isProfileOwner && (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
               <div
                 ref={floatboxRef}
                 className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-300"
