@@ -1,115 +1,163 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Category, UsePackingResult } from '../types/packingCategory';
+import { useState } from "react";
+import { PackingCategory, UsePackingResult } from "../types/packingCategory";
 
 // Hàm parse token từ cookies
 const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
   return null;
 };
 
-const usePackingCategory = (tripId: string): UsePackingResult => {
-  const [categories, setCategories] = useState<Category[]>([]);
+export const usePackingCategory = (tripId?: string): UsePackingResult => {
+  const [categories, setCategories] = useState<PackingCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Lấy token từ cookies
-  const getAuthHeaders = useCallback(() => {
-    const token = getCookie('token'); // Giả sử token được lưu trong cookie với key 'token'
+  // Lấy token từ cookies và tạo headers
+  const getAuthHeaders = () => {
+    const token = getCookie("jwt"); // Giả sử token được lưu trong cookie với key 'jwt'
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
-  }, []); // Không có phụ thuộc vì getCookie không thay đổi
+  };
 
-  // Lấy danh sách danh mục
-  const fetchCategories = useCallback(async () => {
+  // Lấy danh sách danh mục theo tripId
+  const fetchCategories = async () => {
+    if (!tripId) {
+      setError("Trip ID is missing");
+      return;
+    }
+
     setLoading(true);
-    setError(null);
     try {
-      const response = await fetch('http://localhost:5001/getAllPackingCategories', {
+      const response = await fetch(`/api/getPackingCategoriesInTripId?tripId=${tripId}`, {
+        method: "GET",
         headers: getAuthHeaders(),
       });
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      const data: Category[] = await response.json();
-      setCategories(data);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch packing categories");
+      }
+
+      const data = await response.json();
+      setCategories(data || []);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Failed to fetch packing categories");
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders, setCategories, setLoading, setError]);
+  };
 
   // Tạo danh mục mới
-  const createCategory = useCallback(async (name: string, isDefault: boolean = false) => {
+  const createCategory = async (name: string, isDefault = false): Promise<boolean> => {
+    if (!tripId && !isDefault) {
+      setError("Trip ID is required when isDefault is false");
+      return false;
+    }
+
     setLoading(true);
-    setError(null);
     try {
-      const response = await fetch('http://localhost:5001/createPackingCategory', {
-        method: 'POST',
+      const response = await fetch("/api/createPackingCategory", {
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ name, tripId: isDefault ? null : tripId, isDefault }),
+        body: JSON.stringify({
+          name,
+          tripId: isDefault ? null : tripId,
+          isDefault,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to create category');
-      const newCategory: Category = await response.json();
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to create packing category");
+        return false;
+      }
+
+      const newCategory = await response.json();
       setCategories((prev) => [...prev, newCategory]);
+      setError(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Failed to create packing category");
       return false;
     } finally {
       setLoading(false);
     }
-  }, [tripId, getAuthHeaders, setCategories, setLoading, setError]);
+  };
 
   // Cập nhật danh mục
-  const updateCategory = useCallback(async (id: string, name: string, isDefault: boolean = false) => {
+  const updateCategory = async (id: string, name: string, isDefault = false): Promise<boolean> => {
+    if (!tripId && !isDefault) {
+      setError("Trip ID is required when isDefault is false");
+      return false;
+    }
+
     setLoading(true);
-    setError(null);
     try {
-      const response = await fetch(`http://localhost:5001/updatePackingCategory/${id}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/updatePackingCategory/${id}`, {
+        method: "PUT",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ name, tripId: isDefault ? null : tripId, isDefault }),
+        body: JSON.stringify({
+          name,
+          tripId: isDefault ? null : tripId,
+          isDefault,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to update category');
-      const updatedCategory: Category = await response.json();
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to update packing category");
+        return false;
+      }
+
+      const updatedCategory = await response.json();
       setCategories((prev) =>
         prev.map((cat) => (cat.id === id ? updatedCategory : cat))
       );
+      setError(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Failed to update packing category");
       return false;
     } finally {
       setLoading(false);
     }
-  }, [tripId, getAuthHeaders, setCategories, setLoading, setError]);
+  };
 
   // Xóa danh mục
-  const deleteCategory = useCallback(async (id: string) => {
+  const deleteCategory = async (id: string): Promise<boolean> => {
+    if (!tripId) {
+      setError("Trip ID is missing");
+      return false;
+    }
+
     setLoading(true);
-    setError(null);
     try {
-      const response = await fetch(`http://localhost:5001/deletePackingCategory/${id}?tripId=${tripId}`, {
+      const response = await fetch(`/api/deletePackingCategory/${id}?tripId=${tripId}`, {
+        method: "DELETE",
         headers: getAuthHeaders(),
       });
-      if (!response.ok) throw new Error('Failed to delete category');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to delete packing category");
+        return false;
+      }
+
       setCategories((prev) => prev.filter((cat) => cat.id !== id));
+      setError(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Failed to delete packing category");
       return false;
     } finally {
       setLoading(false);
     }
-  }, [tripId, getAuthHeaders, setCategories, setLoading, setError]);
-
-  // Tự động lấy danh mục khi hook được gọi
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  };
 
   return {
     categories,
@@ -121,5 +169,3 @@ const usePackingCategory = (tripId: string): UsePackingResult => {
     deleteCategory,
   };
 };
-
-export default usePackingCategory;

@@ -8,11 +8,11 @@ import {
 } from "react-router-dom";
 import SidebarTrip from "../components/SidebarTrip";
 // import Budget from "../components/Budget";
-// import Packing from "../components/Packing";
+import Packing from "../components/Packing";
 // import Collection from "../components/Collection";
 // import Discover from "../components/Discover";
   import Accommodation from "../components/Accommodation";
-// import Transport from "../components/Transport";
+  import Transport from "../components/Transport";
 // import Activity from "../components/Activity";
 
 const TripDetail = () => {
@@ -42,11 +42,11 @@ const TripDetail = () => {
         <Routes>
           {/* <Route path="activity" element={<Activity tripId={tripId} />} />
           <Route path="budget" element={<Budget tripId={tripId} />} /> */}
-          {/* <Route path="packing" element={<Packing tripId={tripId} />} />
-          <Route path="collection" element={<Collection tripId={tripId} />} /> */}
+          <Route path="packing" element={<Packing tripId={id} />} />
+          {/* <Route path="collection" element={<Collection tripId={tripId} />} />  */}
           {/* <Route path="discover" element={<Discover tripId={tripId} />} /> */}
           <Route path="accommodation" element={<Accommodation tripId={id} />} />
-          {/* <Route path="transport" element={<Transport tripId={tripId} />} /> */}
+          <Route path="transport" element={<Transport tripId={id} />} />
           <Route
             path="*"
             element={<div className="p-6 text-red-500">Route not found!</div>}

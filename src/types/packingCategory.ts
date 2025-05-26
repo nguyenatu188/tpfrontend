@@ -1,10 +1,6 @@
-export type PackingItem = {
-  id?: string;
-  name: string;
-  packed: boolean;
-};
+import { PackingItem } from './packingItem';
 
-export type Category = {
+export type PackingCategory = {
   id: string;
   name: string;
   tripId: string | null;
@@ -13,7 +9,7 @@ export type Category = {
 };
 
 export type UsePackingResult = {
-  categories: Category[];
+  categories: PackingCategory[];
   loading: boolean;
   error: string | null;
   fetchCategories: () => Promise<void>;
