@@ -10,7 +10,9 @@ git clone https://github.com/nguyenatu188/tpfrontend.git
 npm i
 ```
 
-### 3. Chạy development
+### 3. Thay thế các API KEY trong .env bằng API KEY của riêng mình
+
+### 4. Chạy development
 ```bash
 npm run dev
 ```
